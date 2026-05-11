@@ -80,7 +80,8 @@ export const login = async (req, res) => {
         // Generate JWT token
         const token = await generateToken(user._id, res);
 
-        res.status(200).json({ token });
+        res.status(200).json({ user: { id: user._id, name: user.name, email: user.email, profilePic: user.profilePic }, token, message: "Logged in successfully" });
+
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Internal server error' });
@@ -88,5 +89,21 @@ export const login = async (req, res) => {
 };
 
 export const logout = async (req, res) => {
-    res.send("Logout")
+    try {
+
+        const options = {
+            httpOnly: true,
+            sameSite: "strict",
+            secure: process.env.NODE_ENV !== "development"
+        };
+
+        res
+            .status(200)
+            .clearCookie("token", options)
+            .json({ message: "Logged out successfully" });
+            
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
 };
