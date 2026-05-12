@@ -101,9 +101,13 @@ export const logout = async (req, res) => {
             .status(200)
             .clearCookie("token", options)
             .json({ message: "Logged out successfully" });
-            
+
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Internal server error' });
     }
 };
+
+export const updateProfile = async (req, res) => {
+    
+}
