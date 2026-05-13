@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken"
-import { User } from "../models/user.model.js";
+import User from "../models/user.model.js";
 
 const verifyJWT = async (req, res, next) => {
     try {
@@ -11,15 +11,21 @@ const verifyJWT = async (req, res, next) => {
         console.log(token)
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET)
+        console.log(decoded)
 
 
-        const user = await User.findById(decoded?._id).select("-password")
+        const user = await User.findById(decoded?.userId).select("-password")
 
         if (!user) {
-            return res.status(400).json({ message: 'Invalid token' })
+            return res.status(400).json({ message: 'Invalid token1' })
         }
 
-        req.user = user;
+        req.user = {
+            id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+            profilePic: user.profilePic
+        };
         next()
     } catch (error) {
         console.error("Error in veryJWT middleware", error);
