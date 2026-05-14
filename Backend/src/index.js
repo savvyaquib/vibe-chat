@@ -3,6 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth.route.js";
+import messageRoutes from "./routes/message.route.js";
 import { connectDB } from "./lib/db.js";
 
 dotenv.config();
@@ -21,6 +22,7 @@ app.get("/", (req, res) => {
 
 // routes
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/messages", messageRoutes);
 
 
 
