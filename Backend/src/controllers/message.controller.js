@@ -23,3 +23,32 @@ export const getMessage = async (req, res) => {
         res.status(500).json({ message: "Internal server error" })
     }
 }
+
+export const sendMessage = async (req, res) => {
+    try {
+        const { id } = req.params
+        const { content, image } = req.body
+
+        let imageUrl;
+
+        if (image) {
+            // upload base64 image to cloudinary
+            const uploadResponse = await cloudinary.uploader.upload(image, {
+                folder: "vibe-chat",
+                resource_type: "image"
+            })
+            imageUrl = uploadResponse.secure_url
+        }
+        const message = await Message.create({
+            sender: req.user.id,
+            receiver: id,
+            content,
+            image
+        })
+
+        res.status(201).json({ message })
+    } catch (error) {
+        console.error("Error sending message: ", error)
+        res.status(500).json({ message: "Internal server error" })
+    }
+}
