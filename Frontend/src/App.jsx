@@ -5,8 +5,17 @@ import Singup from "./pages/Singup.jsx";
 import Login from "./pages/Login.jsx";
 import Profile from "./pages/Profile.jsx";
 import Settings from "./pages/Settings.jsx";
+import { useAuthStore } from "./store/useAuthStore.js";
+import { useEffect } from "react";
 
 function App() {
+  const { authUser, checkAuth } = useAuthStore();
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  console.log("Auth User in App.jsx:", authUser);
   return (
     <div>
       <Navbar />

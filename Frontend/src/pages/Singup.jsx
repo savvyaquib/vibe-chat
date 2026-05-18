@@ -1,5 +1,3 @@
-import React from 'react'
-
 const Singup = () => {
   return (
     <div>
@@ -9,4 +7,3 @@ const Singup = () => {
 }
 
 export default Singup
-Singup
