@@ -1,7 +1,7 @@
 import Navbar from "./components/Navbar.jsx";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home.jsx";
-import Singup from "./pages/Singup.jsx";
+import Signup from "./pages/Signup.jsx";
 import Login from "./pages/Login.jsx";
 import Profile from "./pages/Profile.jsx";
 import Settings from "./pages/Settings.jsx";
@@ -36,7 +36,7 @@ function App() {
         />
         <Route
           path="/signup"
-          element={!authUser ? <Singup /> : <Navigate to="/" />}
+          element={!authUser ? <Signup /> : <Navigate to="/" />}
         />
         <Route
           path="/login"
