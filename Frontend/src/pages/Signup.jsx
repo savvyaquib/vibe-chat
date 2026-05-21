@@ -10,6 +10,7 @@ import {
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore.js";
+import AuthImagePattern from "../components/AuthImagePattern.jsx";
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -151,6 +152,11 @@ const Signup = () => {
           </div>
         </div>
       </div>
+      {/* right side */}
+      <AuthImagePattern
+        title="Welcome to VibeChat!"
+        subtitle="Connect with friends and the world around you."
+      />
     </div>
   );
 };
