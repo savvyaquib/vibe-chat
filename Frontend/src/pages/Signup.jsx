@@ -11,6 +11,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore.js";
 import AuthImagePattern from "../components/AuthImagePattern.jsx";
+import toast from "react-hot-toast";
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -23,9 +24,25 @@ const Signup = () => {
   const { signup, isSigningUp } = useAuthStore();
   const validateForm = () => {
     const { fullName, email, password } = formData;
-    if (!fullName || !email || !password) {
-      alert("Please fill in all fields.");
-      return false;
+
+    if (!fullName.trim()) {
+      return toast.error("Full name is required.");
+    }
+
+    if (!email.trim()) {
+      return toast.error("Email is required.");
+    }
+
+    if (!password.trim()) {
+      return toast.error("Password is required.");
+    }
+
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      return toast.error("Please enter a valid email address.");
+    }
+
+    if (fullName.trim().length < 3) {
+      return toast.error("Full name must be at least 3 characters long.");
     }
     return true;
   };
@@ -36,9 +53,11 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
-
-    await signup(formData);
+    
+    const success = validateForm();
+    if (success === true) {
+      await signup(formData);
+    }
   };
 
   return (

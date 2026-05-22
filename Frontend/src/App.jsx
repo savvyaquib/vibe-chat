@@ -8,6 +8,7 @@ import Settings from "./pages/Settings.jsx";
 import { useAuthStore } from "./store/useAuthStore.js";
 import { useEffect } from "react";
 import { Loader } from "lucide-react";
+import { Toaster } from "react-hot-toast";
 
 function App() {
   const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
@@ -18,9 +19,12 @@ function App() {
 
   if (isCheckingAuth && !authUser) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader className="size-10 animate-spin" />
-      </div>
+      <>
+        <div className="flex items-center justify-center h-screen">
+          <Loader className="size-10 animate-spin" />
+        </div>
+        <Toaster position="top-right" />
+      </>
     );
   }
 
@@ -51,6 +55,8 @@ function App() {
           element={authUser ? <Settings /> : <Navigate to="/login" />}
         />
       </Routes>
+
+      <Toaster position="top-right" />
     </div>
   );
 }
