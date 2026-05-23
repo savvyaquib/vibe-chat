@@ -16,16 +16,16 @@ import toast from "react-hot-toast";
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: "",
+    name: "",
     email: "",
     password: "",
   });
 
   const { signup, isSigningUp } = useAuthStore();
   const validateForm = () => {
-    const { fullName, email, password } = formData;
+    const { name, email, password } = formData;
 
-    if (!fullName.trim()) {
+    if (!name.trim()) {
       return toast.error("Full name is required.");
     }
 
@@ -41,7 +41,7 @@ const Signup = () => {
       return toast.error("Please enter a valid email address.");
     }
 
-    if (fullName.trim().length < 3) {
+    if (name.trim().length < 3) {
       return toast.error("Full name must be at least 3 characters long.");
     }
     return true;
@@ -91,10 +91,10 @@ const Signup = () => {
                 </div>
                 <input
                   type="text"
-                  name="fullName"
+                  name="name"
                   className="input w-full border-slate-500/45 bg-[#22313f] pl-10 text-slate-50 placeholder:text-slate-300/70 focus:border-[#9D00FF] focus:outline-none"
                   placeholder="John Cardone"
-                  value={formData.fullName}
+                  value={formData.name}
                   onChange={handleChange}
                 />
               </div>
