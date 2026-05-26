@@ -51,6 +51,7 @@ export const signup = async (req, res) => {
                     name: newUser.name,
                     email: newUser.email,
                     profilePic: newUser.profilePic,
+                    createdAt: newUser.createdAt,
                 },
                 message: "User created successfully",
             })
@@ -89,7 +90,17 @@ export const login = async (req, res) => {
         // Generate JWT token
         const token = await generateToken(user._id, res);
 
-        res.status(200).json({ user: { id: user._id, name: user.name, email: user.email, profilePic: user.profilePic }, token, message: "Logged in successfully" });
+        res.status(200).json({
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                profilePic: user.profilePic,
+                createdAt: user.createdAt,
+            },
+            token,
+            message: "Logged in successfully"
+        });
 
     } catch (error) {
         console.error(error);

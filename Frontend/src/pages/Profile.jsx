@@ -31,11 +31,17 @@ const Profile = () => {
 
           <div className="flex flex-col items-center gap-4">
             <div className="relative">
-              <img
-                src={authUser?.profilePic || "/avatar.png"}
-                alt="Profile"
-                className="size-32 rounded-full object-cover border-4"
-              />
+              {authUser?.profilePic ? (
+                <img
+                  src={authUser.profilePic}
+                  alt="Profile"
+                  className="size-32 rounded-full object-cover border-4"
+                />
+              ) : (
+                <div className="flex size-32 items-center justify-center rounded-full border-4 bg-base-200">
+                  <User className="size-14 text-base-content/50" />
+                </div>
+              )}
               <label
                 htmlFor="avatar-upload"
                 className={`absolute bottom-0 right-0 flex size-10 cursor-pointer items-center justify-center rounded-full bg-base-content text-base-200 transition-all duration-200 hover:scale-105 ${
