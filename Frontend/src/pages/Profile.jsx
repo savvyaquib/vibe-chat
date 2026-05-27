@@ -1,8 +1,11 @@
 import { Camera, Mail, User } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore.js";
+import { useState } from "react";
 
 const Profile = () => {
   const { authUser, isUpdatingProfile, updateProfile } = useAuthStore();
+
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -14,7 +17,9 @@ const Profile = () => {
 
     reader.onload = async () => {
       const base64Image = reader.result;
-      await updateProfile({ profilePic: base64Image });
+      setSelectedImage(base64Image);
+      const success = await updateProfile({ profilePic: base64Image });
+      if (!success) setSelectedImage(null);
     };
   };
 
@@ -31,11 +36,17 @@ const Profile = () => {
 
           <div className="flex flex-col items-center gap-4">
             <div className="relative">
-              <img
-                src={authUser?.profilePic || "/avatar.png"}
-                alt="Profile"
-                className="size-32 rounded-full object-cover border-4"
-              />
+              {selectedImage || authUser?.profilePic ? (
+                <img
+                  src={selectedImage || authUser.profilePic}
+                  alt="Profile"
+                  className="size-32 rounded-full object-cover border-4"
+                />
+              ) : (
+                <div className="flex size-32 items-center justify-center rounded-full border-4 bg-base-200">
+                  <User className="size-14 text-base-content/50" />
+                </div>
+              )}
               <label
                 htmlFor="avatar-upload"
                 className={`absolute bottom-0 right-0 flex size-10 cursor-pointer items-center justify-center rounded-full bg-base-content text-base-200 transition-all duration-200 hover:scale-105 ${
