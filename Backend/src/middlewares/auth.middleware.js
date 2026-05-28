@@ -24,7 +24,8 @@ const verifyJWT = async (req, res, next) => {
             id: user._id.toString(),
             name: user.name,
             email: user.email,
-            profilePic: user.profilePic
+            profilePic: user.profilePic,
+            createdAt: user.createdAt
         };
         next()
     } catch (error) {
