@@ -18,12 +18,8 @@ const Profile = () => {
     reader.onload = async () => {
       const base64Image = reader.result;
       setSelectedImage(base64Image);
-<<<<<<< HEAD
       const success = await updateProfile({ profilePic: base64Image });
       if (!success) setSelectedImage(null);
-=======
-      await updateProfile({ profilePic: base64Image });
->>>>>>> fee8f4697213b3c8a0af5161f43360bdb49d7d7c
     };
   };
 

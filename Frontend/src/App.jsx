@@ -30,7 +30,7 @@ function App() {
 
   console.log("Auth User in App.jsx:", authUser);
   return (
-    <div>
+    <div data-theme="retro">
       <Navbar />
 
       <Routes>
