@@ -1,4 +1,11 @@
 import daisyui from "daisyui";
+import { THEMES } from "./src/constants/index.js";
+
+const daisyThemes = THEMES.map((theme) => {
+  if (theme === "light") return "light --default";
+  if (theme === "dark") return "dark --prefersdark";
+  return theme;
+});
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -6,41 +13,5 @@ export default {
   theme: {
     extend: {},
   },
-  plugins: [daisyui],
-  daisyui: {
-    themes: [
-      "light",
-      "dark",
-      "cupcake",
-      "bumblebee",
-      "emerald",
-      "corporate",
-      "synthwave",
-      "retro",
-      "cyberpunk",
-      "valentine",
-      "halloween",
-      "garden",
-      "forest",
-      "aqua",
-      "lofi",
-      "pastel",
-      "fantasy",
-      "wireframe",
-      "black",
-      "luxury",
-      "dracula",
-      "cmyk",
-      "autumn",
-      "business",
-      "acid",
-      "lemonade",
-      "night",
-      "coffee",
-      "winter",
-      "dim",
-      "nord",
-      "sunset",
-    ],
-  },
+  plugins: [daisyui({ themes: daisyThemes })],
 };
