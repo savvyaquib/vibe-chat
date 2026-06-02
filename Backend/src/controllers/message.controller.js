@@ -1,3 +1,7 @@
+import Message from "../models/Message.js"
+import User from "../models/User.js"
+import cloudinary from "../utils/cloudinary.js"
+
 
 export const getUsers = async (req, res) => {
     try {
@@ -43,7 +47,7 @@ export const sendMessage = async (req, res) => {
             sender: req.user.id,
             receiver: id,
             content,
-            image
+            image: imageUrl
         })
 
         res.status(201).json({ message })
