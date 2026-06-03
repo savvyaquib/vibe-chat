@@ -5,10 +5,10 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import { connectDB } from "./lib/db.js";
+import { app, server } from "./lib/socket.js";
 
 dotenv.config();
 
-const app = express();
 
 app.use(cors({
   origin: "http://localhost:5173",
@@ -29,7 +29,7 @@ app.use("/api/v1/messages", messageRoutes);
 
 
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
   connectDB();
 });
