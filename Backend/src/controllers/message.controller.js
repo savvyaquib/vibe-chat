@@ -1,6 +1,7 @@
-import Message from "../models/Message.js"
-import User from "../models/User.js"
-import cloudinary from "../utils/cloudinary.js"
+import Message from "../models/message.model.js"
+import User from "../models/user.model.js"
+import cloudinary from "../lib/cloudinary.js"
+import { io, onlineUsers } from "../lib/socket.js"
 
 
 export const getUsers = async (req, res) => {
@@ -13,17 +14,24 @@ export const getUsers = async (req, res) => {
     }
 }
 
-export const getMessage = async (req, res) => {
+export const getMessages = async (req, res) => {
     try {
         const { id } = req.params
-        const message = await Message.findById(id).populate("sender", "name email profilePic").populate("receiver", "name email profilePic")
+        const currentUserId = req.user.id
 
-        if (!message) {
-            return res.status(404).json({ message: "Message not found" })
-        }
-        res.status(200).json({ message })
+        const messages = await Message.find({
+            $or: [
+                { sender: currentUserId, receiver: id },
+                { sender: id, receiver: currentUserId },
+            ],
+        })
+            .sort({ timestamp: 1 })
+            .populate("sender", "name email profilePic")
+            .populate("receiver", "name email profilePic")
+
+        res.status(200).json({ messages })
     } catch (error) {
-        console.error("Error fetching message:", error)
+        console.error("Error fetching messages:", error)
         res.status(500).json({ message: "Internal server error" })
     }
 }
@@ -31,26 +39,40 @@ export const getMessage = async (req, res) => {
 export const sendMessage = async (req, res) => {
     try {
         const { id } = req.params
-        const { content, image } = req.body
+        const { content, text, image } = req.body
+        const messageContent = content || text
+
+        if (!messageContent && !image) {
+            return res.status(400).json({ message: "Message text or image is required" })
+        }
 
         let imageUrl;
 
         if (image) {
-            // upload base64 image to cloudinary
             const uploadResponse = await cloudinary.uploader.upload(image, {
                 folder: "vibe-chat",
-                resource_type: "image"
+                resource_type: "image",
             })
             imageUrl = uploadResponse.secure_url
         }
+
         const message = await Message.create({
             sender: req.user.id,
             receiver: id,
-            content,
-            image: imageUrl
+            content: messageContent,
+            image: imageUrl,
         })
 
-        res.status(201).json({ message })
+        const populatedMessage = await Message.findById(message._id)
+            .populate("sender", "name email profilePic")
+            .populate("receiver", "name email profilePic")
+
+        const receiverSocketId = onlineUsers.get(id)
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit("message_received", populatedMessage)
+        }
+
+        res.status(201).json({ message: populatedMessage })
     } catch (error) {
         console.error("Error sending message: ", error)
         res.status(500).json({ message: "Internal server error" })
