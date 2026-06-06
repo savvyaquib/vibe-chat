@@ -39,28 +39,38 @@ export const getMessages = async (req, res) => {
 export const sendMessage = async (req, res) => {
     try {
         const { id } = req.params
-        const { content, text, image } = req.body
+        const { content, text, image, images } = req.body
         const messageContent = content || text
 
-        if (!messageContent && !image) {
+        if (!messageContent && !image && (!images || images.length === 0)) {
             return res.status(400).json({ message: "Message text or image is required" })
         }
 
-        let imageUrl;
+        const imageUrls = [];
 
-        if (image) {
+        if (Array.isArray(images) && images.length > 0) {
+            for (const imageData of images) {
+                if (!imageData) continue;
+                const uploadResponse = await cloudinary.uploader.upload(imageData, {
+                    folder: "vibe-chat",
+                    resource_type: "image",
+                })
+                imageUrls.push(uploadResponse.secure_url)
+            }
+        } else if (image) {
             const uploadResponse = await cloudinary.uploader.upload(image, {
                 folder: "vibe-chat",
                 resource_type: "image",
             })
-            imageUrl = uploadResponse.secure_url
+            imageUrls.push(uploadResponse.secure_url)
         }
 
         const message = await Message.create({
             sender: req.user.id,
             receiver: id,
             content: messageContent,
-            image: imageUrl,
+            image: imageUrls[0],
+            images: imageUrls,
         })
 
         const populatedMessage = await Message.findById(message._id)
