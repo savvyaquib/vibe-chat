@@ -6,6 +6,7 @@ import Login from "./pages/Login.jsx";
 import Profile from "./pages/Profile.jsx";
 import Settings from "./pages/Settings.jsx";
 import { useAuthStore } from "./store/useAuthStore.js";
+import { useChatStore } from "./store/useChatStore.js";
 import { useEffect } from "react";
 import { Loader } from "lucide-react";
 import { Toaster } from "react-hot-toast";
@@ -13,11 +14,18 @@ import { useThemeStore } from "./store/useThemeStore.js";
 
 function App() {
   const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
+  const { initSocket } = useChatStore();
 
   const { theme } = useThemeStore();
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  useEffect(() => {
+    if (authUser?.id || authUser?._id) {
+      initSocket(authUser.id || authUser._id);
+    }
+  }, [authUser, initSocket]);
 
   if (isCheckingAuth && !authUser) {
     return (
