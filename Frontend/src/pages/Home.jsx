@@ -15,11 +15,11 @@ const Home = () => {
   return (
     <main className="min-h-screen bg-base-200 pt-16">
       <div className="mx-auto grid h-[calc(100vh-4rem)] max-w-full gap-4 p-0 sm:p-4 lg:max-w-7xl lg:grid-cols-[320px_minmax(0,1fr)]">
-        <div className={`flex flex-col rounded-none border border-base-300 bg-base-100 shadow-sm overflow-hidden lg:rounded-3xl ${isChatOpen ? "hidden" : "flex"}`}>
+        <div className={`flex flex-col rounded-none border border-base-300 bg-base-100 shadow-sm overflow-hidden lg:rounded-3xl ${isChatOpen ? "hidden lg:flex" : "flex"}`}>
           <Sidebar />
         </div>
 
-        <div className={`flex min-h-0 flex-col overflow-hidden border border-base-300 bg-base-100 shadow-sm lg:rounded-3xl ${isChatOpen ? "flex" : "hidden lg:flex"}`}>
+        <div className={`flex min-h-0 flex-col overflow-hidden border border-base-300 bg-base-100 shadow-sm lg:rounded-3xl ${selectedUser ? "flex" : "hidden lg:flex"}`}>
           {!selectedUser && (
             <div className="border-b border-base-300 bg-base-200 px-6 py-5">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
