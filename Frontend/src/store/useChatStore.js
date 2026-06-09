@@ -1,9 +1,6 @@
 import { create } from 'zustand';
-import { io } from 'socket.io-client';
 import toast from 'react-hot-toast';
 import axiosInstance from '../lib/axios';
-
-let socket;
 
 export const useChatStore = create((set, get) => ({
     messages: [],
@@ -12,17 +9,9 @@ export const useChatStore = create((set, get) => ({
     isUsersLoading: false,
     isMessagesLoading: false,
 
-    initSocket: (userId) => {
-        if (socket || !userId) return;
-
-        socket = io('http://localhost:5500', {
-            withCredentials: true,
-        });
-
-        socket.on('connect', () => {
-            socket.emit('join', userId);
-        });
-
+    setSocket: (socket) => {
+        if (!socket) return;
+        
         socket.on('message_received', (message) => {
             const { selectedUser, messages } = get();
             if (!selectedUser) return;
@@ -59,13 +48,22 @@ export const useChatStore = create((set, get) => ({
             set({ isMessagesLoading: false });
         }
     },
-    sendMessage: async ({ text, image }) => {
+    sendMessage: async ({ text, image, images }) => {
         const { selectedUser, messages } = get();
         try {
-            const response = await axiosInstance.post(`/messages/${selectedUser._id}`, {
+            const payload = {
                 content: text,
-                image,
-            });
+            };
+
+            if (image) {
+                payload.image = image;
+            }
+
+            if (images && images.length > 0) {
+                payload.images = images;
+            }
+
+            const response = await axiosInstance.post(`/messages/${selectedUser._id}`, payload);
 
             if (response.data?.message) {
                 set({ messages: [...messages, response.data.message] });
