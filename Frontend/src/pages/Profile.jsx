@@ -38,14 +38,16 @@ const Profile = () => {
             <div className="relative">
               {selectedImage || authUser?.profilePic ? (
                 <img
-                  src={selectedImage || authUser.profilePic}
+                  src={selectedImage || authUser.profilePic || "/avatar.png"}
                   alt="Profile"
                   className="size-32 rounded-full object-cover border-4"
                 />
               ) : (
-                <div className="flex size-32 items-center justify-center rounded-full border-4 bg-base-200">
-                  <User className="size-14 text-base-content/50" />
-                </div>
+                <img
+                  src="/avatar.png"
+                  alt="Profile"
+                  className="size-32 rounded-full object-cover border-4"
+                />
               )}
               <label
                 htmlFor="avatar-upload"
