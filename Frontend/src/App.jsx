@@ -6,27 +6,42 @@ import Login from "./pages/Login.jsx";
 import Profile from "./pages/Profile.jsx";
 import Settings from "./pages/Settings.jsx";
 import { useAuthStore } from "./store/useAuthStore.js";
+import { useChatStore } from "./store/useChatStore.js";
 import { useEffect } from "react";
 import { Loader } from "lucide-react";
+import { Toaster } from "react-hot-toast";
+import { useThemeStore } from "./store/useThemeStore.js";
 
 function App() {
-  const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
+  const { authUser, checkAuth, isCheckingAuth, onlineUsers, socket } = useAuthStore();
+  const { setSocket } = useChatStore();
+  console.log("Online users in App.jsx:", onlineUsers);
 
+  const { theme } = useThemeStore();
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
+  useEffect(() => {
+    if (socket) {
+      setSocket(socket);
+    }
+  }, [socket, setSocket]);
+
   if (isCheckingAuth && !authUser) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader className="size-10 animate-spin" />
-      </div>
+      <>
+        <div className="flex items-center justify-center h-screen">
+          <Loader className="size-10 animate-spin" />
+        </div>
+        <Toaster position="top-right" />
+      </>
     );
   }
 
   console.log("Auth User in App.jsx:", authUser);
   return (
-    <div>
+    <div data-theme={theme}>
       <Navbar />
 
       <Routes>
@@ -51,6 +66,8 @@ function App() {
           element={authUser ? <Settings /> : <Navigate to="/login" />}
         />
       </Routes>
+
+      <Toaster position="top-right" />
     </div>
   );
 }

@@ -1,7 +1,12 @@
+import Message from "../models/message.model.js"
+import User from "../models/user.model.js"
+import cloudinary from "../lib/cloudinary.js"
+import { io, onlineUsers } from "../lib/socket.js"
+
 
 export const getUsers = async (req, res) => {
     try {
-        const users = await User.find({ _id: { $ne: req.user.id } }).select("name email profilePic")
+        const users = await User.find({ _id: { $ne: req.user._id } }).select("name email profilePic")
         res.status(200).json({ users })
     } catch (error) {
         console.error("Error fetching users:", error)
@@ -9,17 +14,24 @@ export const getUsers = async (req, res) => {
     }
 }
 
-export const getMessage = async (req, res) => {
+export const getMessages = async (req, res) => {
     try {
         const { id } = req.params
-        const message = await Message.findById(id).populate("sender", "name email profilePic").populate("receiver", "name email profilePic")
+        const currentUserId = req.user._id
 
-        if (!message) {
-            return res.status(404).json({ message: "Message not found" })
-        }
-        res.status(200).json({ message })
+        const messages = await Message.find({
+            $or: [
+                { sender: currentUserId, receiver: id },
+                { sender: id, receiver: currentUserId },
+            ],
+        })
+            .sort({ timestamp: 1 })
+            .populate("sender", "name email profilePic")
+            .populate("receiver", "name email profilePic")
+
+        res.status(200).json({ messages })
     } catch (error) {
-        console.error("Error fetching message:", error)
+        console.error("Error fetching messages:", error)
         res.status(500).json({ message: "Internal server error" })
     }
 }
@@ -27,26 +39,50 @@ export const getMessage = async (req, res) => {
 export const sendMessage = async (req, res) => {
     try {
         const { id } = req.params
-        const { content, image } = req.body
+        const { content, text, image, images } = req.body
+        const messageContent = content || text
 
-        let imageUrl;
+        if (!messageContent && !image && (!images || images.length === 0)) {
+            return res.status(400).json({ message: "Message text or image is required" })
+        }
 
-        if (image) {
-            // upload base64 image to cloudinary
+        const imageUrls = [];
+
+        if (Array.isArray(images) && images.length > 0) {
+            for (const imageData of images) {
+                if (!imageData) continue;
+                const uploadResponse = await cloudinary.uploader.upload(imageData, {
+                    folder: "vibe-chat",
+                    resource_type: "image",
+                })
+                imageUrls.push(uploadResponse.secure_url)
+            }
+        } else if (image) {
             const uploadResponse = await cloudinary.uploader.upload(image, {
                 folder: "vibe-chat",
-                resource_type: "image"
+                resource_type: "image",
             })
-            imageUrl = uploadResponse.secure_url
+            imageUrls.push(uploadResponse.secure_url)
         }
+
         const message = await Message.create({
-            sender: req.user.id,
+            sender: req.user._id,
             receiver: id,
-            content,
-            image
+            content: messageContent,
+            image: imageUrls[0],
+            images: imageUrls,
         })
 
-        res.status(201).json({ message })
+        const populatedMessage = await Message.findById(message._id)
+            .populate("sender", "name email profilePic")
+            .populate("receiver", "name email profilePic")
+
+        const receiverSocketId = onlineUsers.get(id)
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit("message_received", populatedMessage)
+        }
+
+        res.status(201).json({ message: populatedMessage })
     } catch (error) {
         console.error("Error sending message: ", error)
         res.status(500).json({ message: "Internal server error" })

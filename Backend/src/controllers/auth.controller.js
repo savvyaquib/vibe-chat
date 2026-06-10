@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/user.model.js';
 import { generateToken } from '../lib/utils.js';
+import cloudinary from '../lib/cloudinary.js';
 
 
 export const signup = async (req, res) => {
@@ -44,7 +45,16 @@ export const signup = async (req, res) => {
             generateToken(newUser._id, res);
             await newUser.save()
 
-            res.status(201).json({ id: newUser._id, name: newUser.name, email: newUser.email, profilePic: newUser.profilePic, message: "User created successfully" },)
+            res.status(201).json({
+                user: {
+                    _id: newUser._id,
+                    name: newUser.name,
+                    email: newUser.email,
+                    profilePic: newUser.profilePic,
+                    createdAt: newUser.createdAt,
+                },
+                message: "User created successfully",
+            })
         }
 
         else {
@@ -80,7 +90,17 @@ export const login = async (req, res) => {
         // Generate JWT token
         const token = await generateToken(user._id, res);
 
-        res.status(200).json({ user: { id: user._id, name: user.name, email: user.email, profilePic: user.profilePic }, token, message: "Logged in successfully" });
+        res.status(200).json({
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                profilePic: user.profilePic,
+                createdAt: user.createdAt,
+            },
+            token,
+            message: "Logged in successfully"
+        });
 
     } catch (error) {
         console.error(error);
@@ -116,10 +136,19 @@ export const updateProfile = async (req, res) => {
             return res.status(400).json({ message: "Profile picture is required" })
         }
         const uploadResponse = await cloudinary.uploader.upload(profilePic)
-        const updatedUser = await User.findByIdAndUpdate(req.user.id, { profilePic: uploadResponse.secure_url, }, { new: true })
+        const updatedUser = await User.findByIdAndUpdate(req.user._id, { profilePic: uploadResponse.secure_url, }, { new: true })
 
 
-        return res.status(200).json({ message: "Profile updated successfully" })
+        return res.status(200).json({
+            user: {
+                _id: updatedUser._id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                profilePic: updatedUser.profilePic,
+                createdAt: updatedUser.createdAt,
+            },
+            message: "Profile updated successfully"
+        })
     } catch (error) {
         console.error("Error updating profile:", error);
         res.status(500).json({ message: error.message || 'Internal server error' });

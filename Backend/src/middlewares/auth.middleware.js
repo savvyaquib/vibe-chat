@@ -21,10 +21,11 @@ const verifyJWT = async (req, res, next) => {
         }
 
         req.user = {
-            id: user._id.toString(),
+            _id: user._id.toString(),
             name: user.name,
             email: user.email,
-            profilePic: user.profilePic
+            profilePic: user.profilePic,
+            createdAt: user.createdAt
         };
         next()
     } catch (error) {
