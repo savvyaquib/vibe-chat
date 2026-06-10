@@ -13,8 +13,9 @@ import { Toaster } from "react-hot-toast";
 import { useThemeStore } from "./store/useThemeStore.js";
 
 function App() {
-  const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
-  const { initSocket } = useChatStore();
+  const { authUser, checkAuth, isCheckingAuth, onlineUsers, socket } = useAuthStore();
+  const { setSocket } = useChatStore();
+  console.log("Online users in App.jsx:", onlineUsers);
 
   const { theme } = useThemeStore();
   useEffect(() => {
@@ -22,10 +23,10 @@ function App() {
   }, [checkAuth]);
 
   useEffect(() => {
-    if (authUser?.id || authUser?._id) {
-      initSocket(authUser.id || authUser._id);
+    if (socket) {
+      setSocket(socket);
     }
-  }, [authUser, initSocket]);
+  }, [socket, setSocket]);
 
   if (isCheckingAuth && !authUser) {
     return (
