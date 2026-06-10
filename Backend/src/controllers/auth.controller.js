@@ -47,7 +47,7 @@ export const signup = async (req, res) => {
 
             res.status(201).json({
                 user: {
-                    id: newUser._id,
+                    _id: newUser._id,
                     name: newUser.name,
                     email: newUser.email,
                     profilePic: newUser.profilePic,
@@ -92,7 +92,7 @@ export const login = async (req, res) => {
 
         res.status(200).json({
             user: {
-                id: user._id,
+                _id: user._id,
                 name: user.name,
                 email: user.email,
                 profilePic: user.profilePic,
@@ -136,12 +136,12 @@ export const updateProfile = async (req, res) => {
             return res.status(400).json({ message: "Profile picture is required" })
         }
         const uploadResponse = await cloudinary.uploader.upload(profilePic)
-        const updatedUser = await User.findByIdAndUpdate(req.user.id, { profilePic: uploadResponse.secure_url, }, { new: true })
+        const updatedUser = await User.findByIdAndUpdate(req.user._id, { profilePic: uploadResponse.secure_url, }, { new: true })
 
 
         return res.status(200).json({
             user: {
-                id: updatedUser._id,
+                _id: updatedUser._id,
                 name: updatedUser.name,
                 email: updatedUser.email,
                 profilePic: updatedUser.profilePic,
