@@ -6,7 +6,7 @@ import { Users, Search } from "lucide-react";
 
 const Sidebar = () => {
   const { getUsers, users, selectedUser, setSelectedUser, isUsersLoading } = useChatStore();
-  const { onlineUsers } = useAuthStore();
+  const { onlineUsers, authUser } = useAuthStore();
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -15,6 +15,7 @@ const Sidebar = () => {
   }, [getUsers]);
 
   const filteredUsers = users
+    .filter((user) => user._id !== authUser?._id)
     .filter((user) => {
       const searchValue = search.toLowerCase();
       return (
@@ -48,18 +49,19 @@ const Sidebar = () => {
           />
         </div>
 
-        <div className="mt-4 hidden lg:flex items-center gap-3 bg-base-300/30 p-3 rounded-lg">
-          <input
-            type="checkbox"
-            checked={showOnlineOnly}
-            onChange={(e) => setShowOnlineOnly(e.target.checked)}
-            className="checkbox checkbox-sm checkbox-primary cursor-pointer w-5 h-5"
-            id="online-filter"
-          />
-          <label htmlFor="online-filter" className="cursor-pointer flex items-center gap-2 flex-1">
-            <span className="text-sm font-medium text-base-content">Show online only</span>
-          </label>
-          <span className="text-xs text-primary font-semibold bg-primary/10 px-2 py-1 rounded-full whitespace-nowrap">({Math.max(0, onlineUsers.length)} online)</span>
+        <div className="mt-4 hidden lg:flex items-center gap-4 p-4 rounded-xl border-2 border-primary/40 bg-base-100 hover:border-primary/60 transition-all duration-200 shadow-sm">
+          <div className="flex items-center gap-3 flex-1">
+            <input
+              type="checkbox"
+              checked={showOnlineOnly}
+              onChange={(e) => setShowOnlineOnly(e.target.checked)}
+              className="checkbox checkbox-md checkbox-primary cursor-pointer border-x-2"
+              id="online-filter"
+            />
+            <label htmlFor="online-filter" className="cursor-pointer flex items-center gap-2 flex-1">
+              <span className="text-sm font-semibold text-base-content text-green-400 hover:scale-105 hover:transition-all">{Math.max(0, onlineUsers.length - (authUser && onlineUsers.includes(authUser._id) ? 1 : 0))} Online</span>
+            </label>
+          </div>
         </div>
       </div>
 
@@ -92,7 +94,7 @@ const Sidebar = () => {
               />
               {onlineUsers.includes(user._id) && (
                 <span
-                  className="absolute -bottom-1 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full border-2 border-base-100 bg-emerald-500"
+                  className="absolute top-0 right-0 h-3 w-3 rounded-full border-2 border-base-100 bg-emerald-500"
                 />
               )}
             </div>
