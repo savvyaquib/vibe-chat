@@ -55,7 +55,7 @@ const Sidebar = () => {
               type="checkbox"
               checked={showOnlineOnly}
               onChange={(e) => setShowOnlineOnly(e.target.checked)}
-              className="checkbox checkbox-md checkbox-primary cursor-pointer border-x-2"
+              className="checkbox checkbox-md checkbox-primary cursor-pointer border-x-2 border-primary/50 checked:bg-primary/70 checked:border-primary/70 transition-all duration-200"
               id="online-filter"
             />
             <label htmlFor="online-filter" className="cursor-pointer flex items-center gap-2 flex-1">
