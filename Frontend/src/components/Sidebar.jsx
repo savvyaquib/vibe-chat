@@ -107,7 +107,7 @@ const Sidebar = () => {
             </div>
 
             <div className="min-w-0">
-              <div className="font-medium truncate">{user.fullName || user.name}</div>
+              <div className="font-medium truncate capitalize">{user.fullName || user.name}</div>
               <div className="text-sm text-zinc-400">
                 {onlineUsers.includes(user._id) ? "Online" : "Offline"}
               </div>

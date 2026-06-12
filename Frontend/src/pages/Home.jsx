@@ -27,7 +27,7 @@ const Home = () => {
                   <p className="text-sm uppercase tracking-[0.24em] text-primary">
                     Welcome back
                   </p>
-                  <h1 className="text-2xl font-semibold">
+                  <h1 className="text-2xl font-semibold capitalize">
                     {authUser?.name || authUser?.fullName || "Vibe Chat"}
                   </h1>
                   <p className="text-sm text-base-content/70">

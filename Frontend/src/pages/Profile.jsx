@@ -79,7 +79,7 @@ const Profile = () => {
                 <User className="size-4" />
                 Full Name
               </div>
-              <p className="rounded-lg border border-base-300 bg-base-200 px-4 py-2.5">
+              <p className="rounded-lg border border-base-300 bg-base-200 px-4 py-2.5 capitalize">
                 {authUser?.name}
               </p>
             </div>
