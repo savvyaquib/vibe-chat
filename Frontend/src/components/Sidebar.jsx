@@ -28,7 +28,7 @@ const Sidebar = () => {
   if (isUsersLoading) return <SidebarSkeleton />;
 
   return (
-    <aside className="h-full w-full lg:w-72 border-r border-base-300 flex flex-col transition-all duration-200">
+    <aside className="h-full w-full lg:w-72 flex flex-col transition-all duration-200">
       <div className="w-full p-5">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -49,20 +49,27 @@ const Sidebar = () => {
           />
         </div>
 
-        <div className="mt-4 hidden lg:flex items-center gap-4 p-4 rounded-xl border-2 border-primary/40 bg-base-100 hover:border-primary/60 transition-all duration-200 shadow-sm">
-          <div className="flex items-center gap-3 flex-1">
+        <label className="mt-4 flex items-center justify-between p-3 rounded-2xl bg-base-200 transition-all duration-200 cursor-pointer select-none">
+          <div className="flex items-center gap-2">
+            <div className={`size-2.5 rounded-full transition-all duration-300 ${showOnlineOnly ? 'bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'bg-base-content/30'}`} />
+            <span className="text-sm font-semibold text-base-content/85">Show Online Only</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-base-300 text-base-content/70 font-semibold transition-colors">
+              {Math.max(0, onlineUsers.length - (authUser && onlineUsers.includes(authUser._id) ? 1 : 0))}
+            </span>
+          </div>
+          <div className="flex items-center">
             <input
               type="checkbox"
               checked={showOnlineOnly}
               onChange={(e) => setShowOnlineOnly(e.target.checked)}
-              className="checkbox checkbox-md checkbox-primary cursor-pointer border-x-2 border-primary/50 checked:bg-primary/70 checked:border-primary/70 transition-all duration-200"
-              id="online-filter"
+              className="sr-only"
             />
-            <label htmlFor="online-filter" className="cursor-pointer flex items-center gap-2 flex-1">
-              <span className="text-sm font-semibold text-base-content text-green-400 hover:scale-105 hover:transition-all">{Math.max(0, onlineUsers.length - (authUser && onlineUsers.includes(authUser._id) ? 1 : 0))} Online</span>
-            </label>
+            {/* Custom iOS-style Switch */}
+            <div className={`relative w-9 h-5 rounded-full border border-base-content/30 shadow-sm transition-colors duration-200 ${showOnlineOnly ? 'bg-primary' : 'bg-base-content/20'}`}>
+              <div className={`absolute left-0.5 size-4 rounded-full bg-white shadow transition-transform duration-200 ${showOnlineOnly ? 'translate-x-4' : 'translate-x-0'}`} />
+            </div>
           </div>
-        </div>
+        </label>
       </div>
 
       <div className="overflow-y-auto w-full py-3 scrollbar-hide">
