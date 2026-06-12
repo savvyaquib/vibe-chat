@@ -10,7 +10,7 @@ const Home = () => {
   const isChatOpen = Boolean(selectedUser);
 
   const contactCount = users.length;
-  const onlineCount = onlineUsers.length;
+  const onlineCount = onlineUsers.filter((id) => id !== authUser?._id).length;
 
   return (
     <main className="min-h-screen bg-base-200 pt-16">
