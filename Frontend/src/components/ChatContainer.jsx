@@ -87,11 +87,7 @@ const ChatContainer = () => {
                   />
                 </div>
               </div>
-              <div className="chat-header mb-1">
-                <time className="text-xs opacity-50 ml-1">
-                  {formatMessageTime(message.createdAt)}
-                </time>
-              </div>
+
               <div className={`flex flex-col gap-3 ${isOwnMessage ? "items-end" : "items-start"}`}>
                 {(message.images?.length > 0 || message.image) && (
                   <div className={`grid gap-2 ${message.images?.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
@@ -113,8 +109,12 @@ const ChatContainer = () => {
                   </div>
                 )}
                 {message.content && (
-                  <div className={`chat-bubble flex flex-col shadow-md ${isOwnMessage ? "bg-primary text-primary-content" : "bg-base-300 text-base-content"}`}>
-                    <p>{message.content}</p>
+                  <div className={`chat-bubble relative shadow-md max-w-[85%] sm:max-w-[70%] text-sm px-4 py-2 ${isOwnMessage ? "bg-primary text-primary-content" : "bg-base-300 text-base-content"}`}>
+                    <span className="whitespace-pre-wrap break-words">{message.content}</span>
+                    <span className="inline-block w-[55px]"></span>
+                    <time className="text-[10px] opacity-70 absolute bottom-1 right-3">
+                      {formatMessageTime(message.createdAt)}
+                    </time>
                   </div>
                 )}
               </div>

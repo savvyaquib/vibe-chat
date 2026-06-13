@@ -36,9 +36,9 @@ const ChatHeader = ({ onBack }) => {
             )}
           </div>
           <div className="min-w-0">
-            <h2 className="text-lg font-semibold truncate capitalize">{selectedUser.fullName || selectedUser.username}</h2>
+            <h2 className="text-lg font-semibold truncate capitalize">{selectedUser.fullName || selectedUser.username || selectedUser.name}</h2>
             <p className="text-sm text-base-content/60 truncate">
-              {isOnline ? "Active now" : "Offline"}
+              {isOnline ? "Online now" : "Offline"}
             </p>
           </div>
         </div>
