@@ -1,6 +1,6 @@
 import { useChatStore } from "../store/useChatStore";
 import { useEffect, useRef, useState } from "react";
-import { X } from "lucide-react";
+import { X, ChevronDown } from "lucide-react";
 
 import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
@@ -12,8 +12,10 @@ const ChatContainer = () => {
   const { messages, getMessages, isMessagesLoading, selectedUser, setSelectedUser } = useChatStore();
   const { authUser } = useAuthStore();
   const messageEndRef = useRef(null);
+  const scrollContainerRef = useRef(null);
   const [previewImage, setPreviewImage] = useState(null);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [showScrollButton, setShowScrollButton] = useState(false);
 
   const handleCloseChat = () => {
     setSelectedUser(null);
@@ -32,6 +34,19 @@ const ChatContainer = () => {
   const zoomIn = () => setZoomLevel((prev) => Math.min(prev + 0.2, 3));
   const zoomOut = () => setZoomLevel((prev) => Math.max(prev - 0.2, 0.6));
   const resetZoom = () => setZoomLevel(1);
+
+  const handleScroll = () => {
+    if (!scrollContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+    const isScrolledUp = scrollHeight - scrollTop - clientHeight > 150;
+    setShowScrollButton(isScrolledUp);
+  };
+
+  const scrollToBottom = () => {
+    if (messageEndRef.current) {
+      messageEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   useEffect(() => {
     if (!selectedUser?._id) return;
@@ -55,10 +70,14 @@ const ChatContainer = () => {
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-x-hidden">
+    <div className="flex-1 flex flex-col overflow-x-hidden relative">
       <ChatHeader onBack={handleCloseChat} />
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-base-100 to-base-200/30">
+      <div 
+        className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-base-100 to-base-200/30"
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+      >
         {messages.length === 0 && (
           <div className="flex items-center justify-center h-full">
             <p className="text-base-content/50 text-center">No messages yet. Start the conversation!</p>
@@ -123,6 +142,16 @@ const ChatContainer = () => {
         })}
       </div>
 
+      <button
+        onClick={scrollToBottom}
+        className={`absolute right-6 bottom-28 p-3 bg-base-100 text-base-content rounded-full shadow-[0_4px_14px_rgba(0,0,0,0.15)] border border-base-300 transition-all duration-300 z-10 hover:bg-base-200 hover:scale-105 active:scale-95 ${
+          showScrollButton ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0 pointer-events-none"
+        }`}
+        aria-label="Scroll to bottom"
+      >
+        <ChevronDown className="size-5" />
+      </button>
+
       <MessageInput />
 
       {previewImage && (
@@ -171,7 +200,7 @@ const ChatContainer = () => {
                 src={previewImage}
                 alt="Preview"
                 style={{ transform: `scale(${zoomLevel})` }}
-                className="max-w-[85vw] max-h-[calc(100vh-100px)] object-contain transition-transform duration-200"
+                className="max-w-[85vw] max-h-[calc(100vh-100px)] object-contain transition-transform duration-200 "
               />
             </div>
           </div>
