@@ -25,6 +25,38 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('typing', ({ receiverId }) => {
+        let senderId = null;
+        for (const [userId, sid] of onlineUsers.entries()) {
+            if (sid === socket.id) {
+                senderId = userId;
+                break;
+            }
+        }
+        if (senderId) {
+            const receiverSocketId = onlineUsers.get(receiverId);
+            if (receiverSocketId) {
+                io.to(receiverSocketId).emit('user_typing', { senderId });
+            }
+        }
+    });
+
+    socket.on('stop_typing', ({ receiverId }) => {
+        let senderId = null;
+        for (const [userId, sid] of onlineUsers.entries()) {
+            if (sid === socket.id) {
+                senderId = userId;
+                break;
+            }
+        }
+        if (senderId) {
+            const receiverSocketId = onlineUsers.get(receiverId);
+            if (receiverSocketId) {
+                io.to(receiverSocketId).emit('user_stop_typing', { senderId });
+            }
+        }
+    });
+
     socket.on('disconnect', () => {
         for (const [userId, sid] of onlineUsers.entries()) {
             if (sid === socket.id) {

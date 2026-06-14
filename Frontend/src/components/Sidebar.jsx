@@ -5,7 +5,7 @@ import SidebarSkeleton from "./skeletons/SidebarSkeleton";
 import { Users, Search } from "lucide-react";
 
 const Sidebar = () => {
-  const { getUsers, users, selectedUser, setSelectedUser, isUsersLoading } = useChatStore();
+  const { getUsers, users, selectedUser, setSelectedUser, isUsersLoading, typingUsers } = useChatStore();
   const { onlineUsers, authUser } = useAuthStore();
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
   const [search, setSearch] = useState("");
@@ -106,11 +106,20 @@ const Sidebar = () => {
               )}
             </div>
 
-            <div className="min-w-0">
-              <div className="font-medium truncate capitalize">{user.fullName || user.name}</div>
-              <div className="text-sm text-zinc-400">
-                {onlineUsers.includes(user._id) ? "Online" : "Offline"}
+            <div className="min-w-0 flex-1 flex items-center justify-between">
+              <div>
+                <div className="font-medium truncate capitalize">{user.fullName || user.name}</div>
+                <div className="text-sm text-zinc-400">
+                  {typingUsers[user._id] ? (
+                      <span className="text-emerald-500 font-medium tracking-wide">typing...</span>
+                  ) : onlineUsers.includes(user._id) ? "Online" : "Offline"}
+                </div>
               </div>
+              {user.unreadCount > 0 && (
+                <div className="bg-emerald-500 text-white text-xs font-bold min-w-[1.25rem] h-5 flex items-center justify-center rounded-full px-1.5 ml-2 shadow-sm">
+                  {user.unreadCount}
+                </div>
+              )}
             </div>
           </button>
         ))}

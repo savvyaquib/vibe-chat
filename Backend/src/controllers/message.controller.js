@@ -6,8 +6,25 @@ import { io, onlineUsers } from "../lib/socket.js"
 
 export const getUsers = async (req, res) => {
     try {
-        const users = await User.find({ _id: { $ne: req.user._id } }).select("name email profilePic")
-        res.status(200).json({ users })
+        const currentUserId = req.user._id;
+        const users = await User.find({ _id: { $ne: currentUserId } }).select("name fullName email profilePic");
+
+        const unreadMessages = await Message.aggregate([
+            { $match: { receiver: currentUserId, isRead: false } },
+            { $group: { _id: "$sender", count: { $sum: 1 } } }
+        ]);
+
+        const unreadCounts = {};
+        unreadMessages.forEach(item => {
+            unreadCounts[item._id.toString()] = item.count;
+        });
+
+        const usersWithUnread = users.map(user => ({
+            ...user.toObject(),
+            unreadCount: unreadCounts[user._id.toString()] || 0
+        }));
+
+        res.status(200).json({ users: usersWithUnread })
     } catch (error) {
         console.error("Error fetching users:", error)
         res.status(500).json({ message: "Internal server error" })
@@ -19,6 +36,11 @@ export const getMessages = async (req, res) => {
         const { id } = req.params
         const currentUserId = req.user._id
 
+        await Message.updateMany(
+            { sender: id, receiver: currentUserId, isRead: false },
+            { $set: { isRead: true } }
+        );
+
         const messages = await Message.find({
             $or: [
                 { sender: currentUserId, receiver: id },
@@ -26,8 +48,8 @@ export const getMessages = async (req, res) => {
             ],
         })
             .sort({ timestamp: 1 })
-            .populate("sender", "name email profilePic")
-            .populate("receiver", "name email profilePic")
+            .populate("sender", "name fullName email profilePic")
+            .populate("receiver", "name fullName email profilePic")
 
         res.status(200).json({ messages })
     } catch (error) {
@@ -74,8 +96,8 @@ export const sendMessage = async (req, res) => {
         })
 
         const populatedMessage = await Message.findById(message._id)
-            .populate("sender", "name email profilePic")
-            .populate("receiver", "name email profilePic")
+            .populate("sender", "name fullName email profilePic")
+            .populate("receiver", "name fullName email profilePic")
 
         const receiverSocketId = onlineUsers.get(id)
         if (receiverSocketId) {

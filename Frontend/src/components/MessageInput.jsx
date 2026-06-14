@@ -1,5 +1,6 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useChatStore } from "../store/useChatStore";
+import { useAuthStore } from "../store/useAuthStore";
 import { Image, Send, X } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -9,7 +10,15 @@ const MessageInput = () => {
   const [isSending, setIsSending] = useState(false);
   const isSendingRef = useRef(false);
   const fileInputRef = useRef(null);
-  const { sendMessage } = useChatStore();
+  const typingTimeoutRef = useRef(null);
+  const { sendMessage, selectedUser } = useChatStore();
+  const { socket } = useAuthStore();
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    };
+  }, []);
 
   const readFileAsDataUrl = (file) =>
     new Promise((resolve, reject) => {
@@ -57,6 +66,9 @@ const MessageInput = () => {
     e.preventDefault();
     if (isSendingRef.current) return;
     if (!text.trim() && imagePreviews.length === 0) return;
+
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    if (socket && selectedUser) socket.emit('stop_typing', { receiverId: selectedUser._id });
 
     setIsSending(true);
     isSendingRef.current = true;
@@ -117,7 +129,16 @@ const MessageInput = () => {
             className="w-full px-3 py-2 rounded-lg bg-base-100 text-base-content placeholder-base-content/50 focus:outline-none transition-all duration-200 focus:scale-105"
             placeholder={isSending ? "Sending..." : "Type a message..."}
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => {
+              setText(e.target.value);
+              if (socket && selectedUser) {
+                socket.emit('typing', { receiverId: selectedUser._id });
+                if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+                typingTimeoutRef.current = setTimeout(() => {
+                  socket.emit('stop_typing', { receiverId: selectedUser._id });
+                }, 2000);
+              }
+            }}
             disabled={isSending}
           />
           <input
