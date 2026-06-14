@@ -28,17 +28,21 @@ export const useChatStore = create((set, get) => ({
 
             if (isRelevant) {
                 set({ messages: [...messages, message] });
-            } else {
-                const senderId = message.sender?._id;
-                if (senderId) {
-                    set((state) => ({
-                        users: state.users.map(user => 
-                            user._id === senderId 
-                                ? { ...user, unreadCount: (user.unreadCount || 0) + 1 }
-                                : user
-                        )
-                    }));
-                }
+            }
+
+            const senderId = message.sender?._id;
+            if (senderId) {
+                set((state) => ({
+                    users: state.users.map(user => 
+                        user._id === senderId 
+                            ? { 
+                                ...user, 
+                                lastMessage: message,
+                                unreadCount: !isRelevant ? (user.unreadCount || 0) + 1 : user.unreadCount 
+                              }
+                            : user
+                    )
+                }));
             }
         });
 
@@ -97,7 +101,14 @@ export const useChatStore = create((set, get) => ({
             const response = await axiosInstance.post(`/messages/${selectedUser._id}`, payload);
 
             if (response.data?.message) {
-                set({ messages: [...messages, response.data.message] });
+                set((state) => ({ 
+                    messages: [...state.messages, response.data.message],
+                    users: state.users.map(user => 
+                        user._id === selectedUser._id 
+                            ? { ...user, lastMessage: response.data.message }
+                            : user
+                    )
+                }));
             }
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to send message');

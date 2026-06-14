@@ -14,17 +14,46 @@ export const getUsers = async (req, res) => {
             { $group: { _id: "$sender", count: { $sum: 1 } } }
         ]);
 
+        const latestMessages = await Message.aggregate([
+            {
+                $match: {
+                    $or: [{ sender: currentUserId }, { receiver: currentUserId }]
+                }
+            },
+            {
+                $sort: { timestamp: -1 }
+            },
+            {
+                $group: {
+                    _id: {
+                        $cond: {
+                            if: { $eq: ["$sender", currentUserId] },
+                            then: "$receiver",
+                            else: "$sender"
+                        }
+                    },
+                    lastMessage: { $first: "$$ROOT" }
+                }
+            }
+        ]);
+
         const unreadCounts = {};
         unreadMessages.forEach(item => {
             unreadCounts[item._id.toString()] = item.count;
         });
 
-        const usersWithUnread = users.map(user => ({
+        const lastMessageMap = {};
+        latestMessages.forEach(item => {
+            lastMessageMap[item._id.toString()] = item.lastMessage;
+        });
+
+        const usersWithData = users.map(user => ({
             ...user.toObject(),
-            unreadCount: unreadCounts[user._id.toString()] || 0
+            unreadCount: unreadCounts[user._id.toString()] || 0,
+            lastMessage: lastMessageMap[user._id.toString()] || null
         }));
 
-        res.status(200).json({ users: usersWithUnread })
+        res.status(200).json({ users: usersWithData })
     } catch (error) {
         console.error("Error fetching users:", error)
         res.status(500).json({ message: "Internal server error" })

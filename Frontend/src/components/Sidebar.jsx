@@ -106,17 +106,19 @@ const Sidebar = () => {
               )}
             </div>
 
-            <div className="min-w-0 flex-1 flex items-center justify-between">
-              <div>
+            <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">
                 <div className="font-medium truncate capitalize">{user.fullName || user.name}</div>
-                <div className="text-sm text-zinc-400">
+                <div className="text-sm text-zinc-400 truncate">
                   {typingUsers[user._id] ? (
                       <span className="text-emerald-500 font-medium tracking-wide">typing...</span>
-                  ) : onlineUsers.includes(user._id) ? "Online" : "Offline"}
+                  ) : user.lastMessage ? (
+                      user.lastMessage.content || "🖼️ Photo"
+                  ) : ""}
                 </div>
               </div>
               {user.unreadCount > 0 && (
-                <div className="bg-emerald-500 text-white text-xs font-bold min-w-[1.25rem] h-5 flex items-center justify-center rounded-full px-1.5 ml-2 shadow-sm">
+                <div className="bg-emerald-500 text-white text-xs font-bold min-w-[1.25rem] h-5 flex shrink-0 items-center justify-center rounded-full px-1.5 shadow-sm">
                   {user.unreadCount}
                 </div>
               )}
