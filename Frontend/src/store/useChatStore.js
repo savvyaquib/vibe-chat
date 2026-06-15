@@ -59,6 +59,32 @@ export const useChatStore = create((set, get) => ({
                 return { typingUsers: newTypingUsers };
             });
         });
+
+        socket.on('messages_read', ({ userId }) => {
+            const { selectedUser } = get();
+            
+            if (selectedUser && selectedUser._id === userId) {
+                set((state) => ({
+                    messages: state.messages.map(msg => 
+                        msg.receiver?._id === userId || msg.receiver === userId
+                            ? { ...msg, isRead: true }
+                            : msg
+                    )
+                }));
+            }
+
+            set((state) => ({
+                users: state.users.map(user => {
+                    if (user._id === userId && user.lastMessage && (user.lastMessage.receiver?._id === userId || user.lastMessage.receiver === userId)) {
+                        return { 
+                            ...user, 
+                            lastMessage: { ...user.lastMessage, isRead: true } 
+                        };
+                    }
+                    return user;
+                })
+            }));
+        });
     },
 
     getUsers: async () => {
@@ -81,6 +107,23 @@ export const useChatStore = create((set, get) => ({
             toast.error(error.response?.data?.message || 'Failed to fetch messages');
         } finally {
             set({ isMessagesLoading: false });
+        }
+    },
+    markMessagesAsRead: async (userId) => {
+        try {
+            await axiosInstance.put(`/messages/mark-read/${userId}`);
+            set((state) => ({
+                messages: state.messages.map(msg => 
+                    msg.sender?._id === userId || msg.sender === userId
+                        ? { ...msg, isRead: true }
+                        : msg
+                ),
+                users: state.users.map(user => 
+                    user._id === userId ? { ...user, unreadCount: 0 } : user
+                )
+            }));
+        } catch (error) {
+            console.error('Failed to mark messages as read:', error);
         }
     },
     sendMessage: async ({ text, image, images }) => {

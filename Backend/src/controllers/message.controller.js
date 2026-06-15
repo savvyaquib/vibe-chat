@@ -65,10 +65,17 @@ export const getMessages = async (req, res) => {
         const { id } = req.params
         const currentUserId = req.user._id
 
-        await Message.updateMany(
+        const updateResult = await Message.updateMany(
             { sender: id, receiver: currentUserId, isRead: false },
             { $set: { isRead: true } }
         );
+
+        if (updateResult.modifiedCount > 0) {
+            const senderSocketId = onlineUsers.get(id);
+            if (senderSocketId) {
+                io.to(senderSocketId).emit("messages_read", { userId: currentUserId });
+            }
+        }
 
         const messages = await Message.find({
             $or: [
@@ -84,6 +91,30 @@ export const getMessages = async (req, res) => {
     } catch (error) {
         console.error("Error fetching messages:", error)
         res.status(500).json({ message: "Internal server error" })
+    }
+}
+
+export const markMessagesAsRead = async (req, res) => {
+    try {
+        const { id } = req.params; // ID of the user whose messages we are reading
+        const currentUserId = req.user._id;
+
+        const updateResult = await Message.updateMany(
+            { sender: id, receiver: currentUserId, isRead: false },
+            { $set: { isRead: true } }
+        );
+
+        if (updateResult.modifiedCount > 0) {
+            const senderSocketId = onlineUsers.get(id);
+            if (senderSocketId) {
+                io.to(senderSocketId).emit("messages_read", { userId: currentUserId });
+            }
+        }
+
+        res.status(200).json({ success: true, modifiedCount: updateResult.modifiedCount });
+    } catch (error) {
+        console.error("Error marking messages as read:", error);
+        res.status(500).json({ message: "Internal server error" });
     }
 }
 

@@ -9,10 +9,11 @@ import { useAuthStore } from "../store/useAuthStore";
 import { formatMessageTime } from "../lib/utils";
 
 const ChatContainer = () => {
-  const { messages, getMessages, isMessagesLoading, selectedUser, setSelectedUser } = useChatStore();
+  const { messages, getMessages, isMessagesLoading, selectedUser, setSelectedUser, markMessagesAsRead } = useChatStore();
   const { authUser } = useAuthStore();
   const messageEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
+  const prevMessagesLength = useRef(0);
   const [previewImage, setPreviewImage] = useState(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -51,13 +52,40 @@ const ChatContainer = () => {
   useEffect(() => {
     if (!selectedUser?._id) return;
     getMessages(selectedUser._id);
+    prevMessagesLength.current = 0; // Reset on user change
   }, [selectedUser?._id, getMessages]);
 
   useEffect(() => {
-    if (messageEndRef.current && messages) {
-      messageEndRef.current.scrollIntoView({ behavior: "smooth" });
+    if (messageEndRef.current && messages.length > 0) {
+      const isNewMessage = messages.length > prevMessagesLength.current;
+      const lastMessage = messages[messages.length - 1];
+      const isOwnMessage = lastMessage && (lastMessage.sender === authUser._id || lastMessage.sender?._id === authUser._id);
+      
+      if (prevMessagesLength.current === 0) {
+        // Initial load for this chat
+        messageEndRef.current.scrollIntoView({ behavior: "auto" });
+      } else if (isNewMessage && (!showScrollButton || isOwnMessage)) {
+        // Only auto-scroll if it's a completely new message AND (we're at the bottom OR we just sent it)
+        messageEndRef.current.scrollIntoView({ behavior: "smooth" });
+      }
+
+      prevMessagesLength.current = messages.length;
     }
-  }, [messages]); 
+  }, [messages, showScrollButton, authUser._id]);
+
+  useEffect(() => {
+    if (!selectedUser?._id || !messages.length) return;
+
+    // Check if there are any unread messages from the other user
+    const hasUnread = messages.some(msg => 
+      !msg.isRead && (msg.sender === selectedUser._id || msg.sender?._id === selectedUser._id)
+    );
+
+    // If we have unread messages and we are currently scrolled to the bottom (viewing them)
+    if (hasUnread && !showScrollButton) {
+      markMessagesAsRead(selectedUser._id);
+    }
+  }, [messages, showScrollButton, selectedUser?._id, markMessagesAsRead]);
 
   if (isMessagesLoading) {
     return (
@@ -134,6 +162,11 @@ const ChatContainer = () => {
                     <time className="text-[10px] opacity-70 absolute bottom-1 right-3">
                       {formatMessageTime(message.createdAt)}
                     </time>
+                  </div>
+                )}
+                {isOwnMessage && index === messages.length - 1 && message.isRead && (
+                  <div className="text-[11px] text-base-content/60 font-medium -mt-1.5 pr-1 tracking-wide">
+                    Seen
                   </div>
                 )}
               </div>
