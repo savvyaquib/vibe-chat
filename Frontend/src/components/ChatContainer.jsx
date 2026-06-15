@@ -120,7 +120,6 @@ const ChatContainer = () => {
             <div
               key={message._id}
               className={`chat ${isOwnMessage ? "chat-end" : "chat-start"}`}
-              ref={index === messages.length - 1 ? messageEndRef : null}
             >
               <div className="chat-image avatar">
                 <div className="size-10 rounded-full border-2 border-base-300 shadow-sm">
@@ -173,6 +172,7 @@ const ChatContainer = () => {
             </div>
           )
         })}
+        <div ref={messageEndRef} />
       </div>
 
       <button
