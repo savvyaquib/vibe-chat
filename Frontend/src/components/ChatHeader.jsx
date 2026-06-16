@@ -46,7 +46,7 @@ const ChatHeader = ({ onBack }) => {
         <button
           type="button"
           onClick={onBack}
-          className="rounded-full p-2 hover:bg-base-300 transition-colors"
+          className="hidden lg:block rounded-full p-2 hover:bg-base-300 transition-colors"
           aria-label="Close chat"
         >
           <X className="size-5" />
