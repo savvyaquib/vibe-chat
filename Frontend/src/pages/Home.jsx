@@ -13,8 +13,8 @@ const Home = () => {
   const onlineCount = onlineUsers.filter((id) => id !== authUser?._id).length;
 
   return (
-    <main className="min-h-screen bg-base-200 pt-16">
-      <div className="mx-auto grid h-[calc(100vh-4rem)] max-w-full gap-4 p-0 sm:p-4 lg:max-w-7xl lg:grid-cols-[320px_minmax(0,1fr)]">
+    <main className="h-screen h-[100dvh] bg-base-200 pt-16 overflow-hidden">
+      <div className="mx-auto grid h-full max-w-full gap-4 p-0 sm:p-4 lg:max-w-7xl lg:grid-cols-[320px_minmax(0,1fr)]">
         <div className={`flex flex-col rounded-none border border-base-300 bg-base-100 shadow-sm overflow-hidden lg:rounded-3xl ${isChatOpen ? "hidden lg:flex" : "flex"}`}>
           <Sidebar />
         </div>

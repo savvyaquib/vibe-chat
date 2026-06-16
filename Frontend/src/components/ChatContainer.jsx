@@ -14,6 +14,7 @@ const ChatContainer = () => {
   const messageEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
   const prevMessagesLength = useRef(0);
+  const hasManuallyScrolledRef = useRef(false);
   const [previewImage, setPreviewImage] = useState(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -40,13 +41,27 @@ const ChatContainer = () => {
   const handleScroll = () => {
     if (!scrollContainerRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+    
+    // If user is scrolled up more than 50px, mark as manually scrolled
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 50;
+    if (!isNearBottom) {
+      hasManuallyScrolledRef.current = true;
+    } else {
+      hasManuallyScrolledRef.current = false;
+    }
+
     const isScrolledUp = scrollHeight - scrollTop - clientHeight > 150;
     setShowScrollButton(isScrolledUp);
   };
 
-  const scrollToBottom = () => {
-    if (messageEndRef.current) {
-      messageEndRef.current.scrollIntoView({ behavior: "smooth" });
+  const scrollToBottom = (behavior = "smooth") => {
+    if (scrollContainerRef.current) {
+      const scrollBehavior = typeof behavior === "string" ? behavior : "smooth";
+      scrollContainerRef.current.scrollTo({
+        top: scrollContainerRef.current.scrollHeight,
+        behavior: scrollBehavior
+      });
+      hasManuallyScrolledRef.current = false;
     }
   };
 
@@ -54,31 +69,51 @@ const ChatContainer = () => {
     if (!selectedUser?._id) return;
     getMessages(selectedUser._id);
     prevMessagesLength.current = 0; // Reset on user change
+    hasManuallyScrolledRef.current = false; // Reset scroll lock status
     setUnreadCount(0); // Reset unread count on user change
   }, [selectedUser?._id, getMessages]);
 
   useEffect(() => {
-    if (messageEndRef.current && messages.length > 0) {
+    if (scrollContainerRef.current && messages.length > 0) {
       const isNewMessage = messages.length > prevMessagesLength.current;
       const lastMessage = messages[messages.length - 1];
       const isOwnMessage = lastMessage && (lastMessage.sender === authUser._id || lastMessage.sender?._id === authUser._id);
       
       if (prevMessagesLength.current === 0) {
-        // Initial load for this chat
-        messageEndRef.current.scrollIntoView({ behavior: "auto" });
-      } else if (isNewMessage && (!showScrollButton || isOwnMessage)) {
-        // Only auto-scroll if it's a completely new message AND (we're at the bottom OR we just sent it)
-        messageEndRef.current.scrollIntoView({ behavior: "smooth" });
+        prevMessagesLength.current = messages.length;
+        hasManuallyScrolledRef.current = false;
+        
+        // Initial load for this chat - scroll instantly and also schedule layout checks
+        const doScroll = () => {
+          if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+          }
+        };
+        doScroll();
+        const t1 = setTimeout(doScroll, 50);
+        const t2 = setTimeout(doScroll, 150);
+        const t3 = setTimeout(doScroll, 300);
+        return () => {
+          clearTimeout(t1);
+          clearTimeout(t2);
+          clearTimeout(t3);
+        };
+      } else if (isNewMessage && (!hasManuallyScrolledRef.current || isOwnMessage)) {
+        // New message (either sent or received when at the bottom)
+        scrollContainerRef.current.scrollTo({
+          top: scrollContainerRef.current.scrollHeight,
+          behavior: "smooth"
+        });
       }
 
       // Increment unread count if we receive a new message from the other user while scrolled up
-      if (isNewMessage && showScrollButton && !isOwnMessage) {
+      if (isNewMessage && hasManuallyScrolledRef.current && !isOwnMessage) {
         setUnreadCount((prev) => prev + 1);
       }
 
       prevMessagesLength.current = messages.length;
     }
-  }, [messages, showScrollButton, authUser._id]);
+  }, [messages, authUser._id]);
 
   useEffect(() => {
     if (!showScrollButton) {
@@ -160,6 +195,11 @@ const ChatContainer = () => {
                         <img
                           src={imgSrc}
                           alt={`Attachment ${imgIndex + 1}`}
+                          onLoad={() => {
+                            if (scrollContainerRef.current && !hasManuallyScrolledRef.current) {
+                              scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+                            }
+                          }}
                           className={`w-full rounded-3xl object-cover transition-all duration-200 hover:opacity-90 ${message.images?.length > 1 ? "max-h-[200px]" : "max-h-[280px]"}`}
                           style={{ maxWidth: message.images?.length > 1 ? "220px" : "320px" }}
                         />
