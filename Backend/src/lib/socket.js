@@ -7,7 +7,18 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
     cors: {
-        origin: ['http://localhost:5173', 'http://localhost:5174'],
+        origin: (origin, callback) => {
+            if (process.env.NODE_ENV === "development" || !origin) {
+                callback(null, true);
+            } else {
+                const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174'];
+                if (allowedOrigins.indexOf(origin) !== -1) {
+                    callback(null, true);
+                } else {
+                    callback(new Error('Not allowed by CORS'));
+                }
+            }
+        },
         credentials: true,
     }
 });
