@@ -2,11 +2,12 @@ import Message from "../models/message.model.js"
 import User from "../models/user.model.js"
 import cloudinary from "../lib/cloudinary.js"
 import { io, onlineUsers } from "../lib/socket.js"
+import mongoose from "mongoose"
 
 
 export const getUsers = async (req, res) => {
     try {
-        const currentUserId = req.user._id;
+        const currentUserId = new mongoose.Types.ObjectId(req.user._id);
         const users = await User.find({ _id: { $ne: currentUserId } }).select("name fullName email profilePic");
 
         const unreadMessages = await Message.aggregate([

@@ -17,6 +17,7 @@ const ChatContainer = () => {
   const [previewImage, setPreviewImage] = useState(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const handleCloseChat = () => {
     setSelectedUser(null);
@@ -53,6 +54,7 @@ const ChatContainer = () => {
     if (!selectedUser?._id) return;
     getMessages(selectedUser._id);
     prevMessagesLength.current = 0; // Reset on user change
+    setUnreadCount(0); // Reset unread count on user change
   }, [selectedUser?._id, getMessages]);
 
   useEffect(() => {
@@ -69,9 +71,20 @@ const ChatContainer = () => {
         messageEndRef.current.scrollIntoView({ behavior: "smooth" });
       }
 
+      // Increment unread count if we receive a new message from the other user while scrolled up
+      if (isNewMessage && showScrollButton && !isOwnMessage) {
+        setUnreadCount((prev) => prev + 1);
+      }
+
       prevMessagesLength.current = messages.length;
     }
   }, [messages, showScrollButton, authUser._id]);
+
+  useEffect(() => {
+    if (!showScrollButton) {
+      setUnreadCount(0);
+    }
+  }, [showScrollButton]);
 
   useEffect(() => {
     if (!selectedUser?._id || !messages.length) return;
@@ -183,6 +196,11 @@ const ChatContainer = () => {
         aria-label="Scroll to bottom"
       >
         <ChevronDown className="size-5" />
+        {unreadCount > 0 && (
+          <span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 bg-emerald-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-base-100 shadow-md">
+            {unreadCount}
+          </span>
+        )}
       </button>
 
       <MessageInput />
