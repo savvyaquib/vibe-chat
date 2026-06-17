@@ -11,8 +11,17 @@ const MessageInput = () => {
   const isSendingRef = useRef(false);
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const inputRef = useRef(null);
   const { sendMessage, selectedUser } = useChatStore();
   const { socket } = useAuthStore();
+
+  const isMobile = typeof window !== "undefined" && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+
+  useEffect(() => {
+    if (selectedUser && !isMobile) {
+      inputRef.current?.focus();
+    }
+  }, [selectedUser, isMobile]);
 
   useEffect(() => {
     return () => {
@@ -65,30 +74,36 @@ const MessageInput = () => {
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (isSendingRef.current) return;
-    if (!text.trim() && imagePreviews.length === 0) return;
+
+    const trimmedText = text.trim();
+    const imagesToSend = imagePreviews.map((preview) => preview.src);
+    if (!trimmedText && imagesToSend.length === 0) return;
 
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     if (socket && selectedUser) socket.emit('stop_typing', { receiverId: selectedUser._id });
 
+    // Clear form immediately for a seamless feel (WhatsApp style)
+    clearForm();
+
     setIsSending(true);
     isSendingRef.current = true;
 
-    let success = false;
     try {
       await sendMessage({
-        text: text.trim(),
-        images: imagePreviews.map((preview) => preview.src),
+        text: trimmedText,
+        images: imagesToSend,
       });
-      success = true;
     } catch (error) {
       console.error("Failed to send message:", error);
       toast.error("Failed to send message. Please try again.");
+      // Restore the text in the input box so the user doesn't lose it
+      setText(trimmedText);
     } finally {
       setIsSending(false);
       isSendingRef.current = false;
-      if (success) {
-        clearForm();
-      }
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
     }
   };
 
@@ -125,9 +140,10 @@ const MessageInput = () => {
       >
         <div className="flex-1 flex gap-2 items-center">
           <input
+            ref={inputRef}
             type="text"
             className="w-full px-3 py-2 rounded-lg bg-base-100 text-base-content placeholder-base-content/50 focus:outline-none transition-all duration-200 focus:scale-105"
-            placeholder={isSending ? "Sending..." : "Type a message..."}
+            placeholder="Type a message..."
             value={text}
             onChange={(e) => {
               setText(e.target.value);
@@ -139,7 +155,6 @@ const MessageInput = () => {
                 }, 2000);
               }
             }}
-            disabled={isSending}
           />
           <input
             type="file"
