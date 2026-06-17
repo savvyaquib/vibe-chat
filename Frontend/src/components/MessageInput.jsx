@@ -79,6 +79,9 @@ const MessageInput = () => {
     const imagesToSend = imagePreviews.map((preview) => preview.src);
     if (!trimmedText && imagesToSend.length === 0) return;
 
+    // Focus immediately to keep keyboard open on mobile
+    inputRef.current?.focus();
+
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     if (socket && selectedUser) socket.emit('stop_typing', { receiverId: selectedUser._id });
 
@@ -179,6 +182,7 @@ const MessageInput = () => {
           type="submit"
           className={`btn btn-sm btn-circle ${isSending ? "loading" : ""}`}
           disabled={isSending || (!text.trim() && imagePreviews.length === 0)}
+          onMouseDown={(e) => e.preventDefault()}
           aria-label={isSending ? "Sending message" : "Send message"}
         >
           {!isSending && <Send size={22} />}
