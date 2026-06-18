@@ -16,9 +16,20 @@ const ChatContainer = () => {
   const prevMessagesLength = useRef(0);
   const hasManuallyScrolledRef = useRef(false);
   const [previewImage, setPreviewImage] = useState(null);
-  const [zoomLevel, setZoomLevel] = useState(1);
+  const [scale, setScale] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [touchStartDist, setTouchStartDist] = useState(0);
+  const [touchStartScale, setTouchStartScale] = useState(1);
+  const [touchStartCenter, setTouchStartCenter] = useState({ x: 0, y: 0 });
+  const [touchStartOffset, setTouchStartOffset] = useState({ x: 0, y: 0 });
+  const [lastTap, setLastTap] = useState(0);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  const containerRef = useRef(null);
+  const imgRef = useRef(null);
 
   const handleCloseChat = () => {
     setSelectedUser(null);
@@ -26,17 +37,176 @@ const ChatContainer = () => {
 
   const openPreview = (src) => {
     setPreviewImage(src);
-    setZoomLevel(1);
+    setScale(1);
+    setOffset({ x: 0, y: 0 });
   };
 
   const closePreview = () => {
     setPreviewImage(null);
-    setZoomLevel(1);
+    setScale(1);
+    setOffset({ x: 0, y: 0 });
   };
 
-  const zoomIn = () => setZoomLevel((prev) => Math.min(prev + 0.2, 3));
-  const zoomOut = () => setZoomLevel((prev) => Math.max(prev - 0.2, 0.6));
-  const resetZoom = () => setZoomLevel(1);
+  const handleWheel = (e) => {
+    const zoomSpeed = 0.1;
+    const delta = -e.deltaY;
+    const newScale = Math.min(Math.max(scale + delta * zoomSpeed * 0.01 * scale, 1), 5);
+
+    if (newScale !== scale && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      const scaleRatio = newScale / scale;
+      const nextOffsetX = (mouseX - cx) - ((mouseX - cx) - offset.x) * scaleRatio;
+      const nextOffsetY = (mouseY - cy) - ((mouseY - cy) - offset.y) * scaleRatio;
+
+      setScale(newScale);
+      setOffset({ x: nextOffsetX, y: nextOffsetY });
+    }
+  };
+
+  const handleMouseDown = (e) => {
+    e.preventDefault();
+    if (scale <= 1) return;
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX - offset.x,
+      y: e.clientY - offset.y,
+    });
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    setOffset({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y,
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleTouchStart = (e) => {
+    if (e.touches.length === 1) {
+      const now = Date.now();
+      const DOUBLE_PRESS_DELAY = 300;
+      if (now - lastTap < DOUBLE_PRESS_DELAY) {
+        const touch = e.touches[0];
+        if (containerRef.current) {
+          const rect = containerRef.current.getBoundingClientRect();
+          const cx = rect.width / 2;
+          const cy = rect.height / 2;
+          const mouseX = touch.clientX - rect.left;
+          const mouseY = touch.clientY - rect.top;
+
+          if (scale > 1.1) {
+            setScale(1);
+            setOffset({ x: 0, y: 0 });
+          } else {
+            const newScale = 2.5;
+            const scaleRatio = newScale / scale;
+            const nextOffsetX = (mouseX - cx) - ((mouseX - cx) - offset.x) * scaleRatio;
+            const nextOffsetY = (mouseY - cy) - ((mouseY - cy) - offset.y) * scaleRatio;
+            setScale(newScale);
+            setOffset({ x: nextOffsetX, y: nextOffsetY });
+          }
+        }
+        setLastTap(0);
+        setIsDragging(false);
+        return;
+      }
+      setLastTap(now);
+
+      if (scale > 1) {
+        const touch = e.touches[0];
+        setIsDragging(true);
+        setDragStart({
+          x: touch.clientX - offset.x,
+          y: touch.clientY - offset.y,
+        });
+      }
+    } else if (e.touches.length === 2) {
+      setIsDragging(false);
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+
+      const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      setTouchStartDist(dist);
+      setTouchStartScale(scale);
+
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const midX = (t1.clientX + t2.clientX) / 2 - rect.left;
+        const midY = (t1.clientY + t2.clientY) / 2 - rect.top;
+        setTouchStartCenter({ x: midX, y: midY });
+        setTouchStartOffset({ ...offset });
+      }
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.touches.length === 1 && isDragging && scale > 1) {
+      const touch = e.touches[0];
+      setOffset({
+        x: touch.clientX - dragStart.x,
+        y: touch.clientY - dragStart.y,
+      });
+    } else if (e.touches.length === 2 && touchStartDist > 0 && containerRef.current) {
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+
+      const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      const factor = dist / touchStartDist;
+      const newScale = Math.min(Math.max(touchStartScale * factor, 1), 5);
+
+      if (newScale !== scale) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const cx = rect.width / 2;
+        const cy = rect.height / 2;
+
+        const scaleRatio = newScale / touchStartScale;
+        const nextOffsetX = (touchStartCenter.x - cx) - ((touchStartCenter.x - cx) - touchStartOffset.x) * scaleRatio;
+        const nextOffsetY = (touchStartCenter.y - cy) - ((touchStartCenter.y - cy) - touchStartOffset.y) * scaleRatio;
+
+        setScale(newScale);
+        setOffset({ x: nextOffsetX, y: nextOffsetY });
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    setTouchStartDist(0);
+  };
+
+  const handleDoubleClick = (e) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const cx = rect.width / 2;
+    const cy = rect.height / 2;
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    if (scale > 1.1) {
+      setScale(1);
+      setOffset({ x: 0, y: 0 });
+    } else {
+      const newScale = 2.5;
+      const scaleRatio = newScale / scale;
+      const nextOffsetX = (mouseX - cx) - ((mouseX - cx) - offset.x) * scaleRatio;
+      const nextOffsetY = (mouseY - cy) - ((mouseY - cy) - offset.y) * scaleRatio;
+      setScale(newScale);
+      setOffset({ x: nextOffsetX, y: nextOffsetY });
+    }
+  };
 
   const handleScroll = () => {
     if (!scrollContainerRef.current) return;
@@ -246,54 +416,46 @@ const ChatContainer = () => {
       <MessageInput />
 
       {previewImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="relative flex flex-col rounded-2xl bg-base-100 shadow-2xl">
-            <div className="flex items-center justify-between gap-2 p-3 border-b border-base-300">
-              <div />
-              <div className="flex items-center gap-2">
-                <button
-                  className="btn btn-xs btn-circle bg-base-200/90 hover:bg-base-300"
-                  type="button"
-                  onClick={zoomOut}
-                  title="Zoom out"
-                >
-                  −
-                </button>
-                <button
-                  className="btn btn-xs btn-circle bg-base-200/90 hover:bg-base-300"
-                  type="button"
-                  onClick={resetZoom}
-                  title="Reset zoom"
-                >
-                  1x
-                </button>
-                <button
-                  className="btn btn-xs btn-circle bg-base-200/90 hover:bg-base-300"
-                  type="button"
-                  onClick={zoomIn}
-                  title="Zoom in"
-                >
-                  +
-                </button>
-                <button
-                  className="btn btn-xs btn-circle bg-base-200/90 hover:bg-base-300"
-                  type="button"
-                  onClick={closePreview}
-                  title="Close"
-                >
-                  <X className="size-4" />
-                </button>
-              </div>
-            </div>
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm select-none"
+          onClick={closePreview}
+        >
+          <button
+            className="absolute top-4 right-4 z-50 p-2.5 bg-black/40 hover:bg-black/60 text-white rounded-full transition-colors duration-200 focus:outline-none"
+            type="button"
+            onClick={closePreview}
+            title="Close"
+          >
+            <X className="size-6" />
+          </button>
 
-            <div className="overflow-auto flex items-center justify-center" style={{ maxHeight: "calc(100vh - 80px)", maxWidth: "90vw" }}>
-              <img
-                src={previewImage}
-                alt="Preview"
-                style={{ transform: `scale(${zoomLevel})` }}
-                className="max-w-[85vw] max-h-[calc(100vh-100px)] object-contain transition-transform duration-200 "
-              />
-            </div>
+          <div 
+            ref={containerRef}
+            className="w-full h-full flex items-center justify-center overflow-hidden touch-none"
+            style={{ cursor: scale > 1 ? "grab" : "zoom-in" }}
+            onClick={(e) => e.stopPropagation()}
+            onWheel={handleWheel}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseLeave}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onDoubleClick={handleDoubleClick}
+          >
+            <img
+              ref={imgRef}
+              src={previewImage}
+              alt="Preview"
+              style={{
+                transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
+                transformOrigin: "center center",
+                maxHeight: "90vh",
+                maxWidth: "90vw"
+              }}
+              className="object-contain pointer-events-none transition-transform duration-100 ease-out"
+            />
           </div>
         </div>
       )}
