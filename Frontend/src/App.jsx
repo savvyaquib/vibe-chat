@@ -41,31 +41,33 @@ function App() {
 
   console.log("Auth User in App.jsx:", authUser);
   return (
-    <div data-theme={theme}>
+    <div data-theme={theme} className="flex flex-col h-full w-full overflow-hidden">
       <Navbar />
 
-      <Routes>
-        <Route
-          path="/"
-          element={authUser ? <Home /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/signup"
-          element={!authUser ? <Signup /> : <Navigate to="/" />}
-        />
-        <Route
-          path="/login"
-          element={!authUser ? <Login /> : <Navigate to="/" />}
-        />
-        <Route
-          path="/profile"
-          element={authUser ? <Profile /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/settings"
-          element={authUser ? <Settings /> : <Navigate to="/login" />}
-        />
-      </Routes>
+      <div className="flex-1 min-h-0 w-full overflow-hidden">
+        <Routes>
+          <Route
+            path="/"
+            element={authUser ? <Home /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/signup"
+            element={!authUser ? <Signup /> : <Navigate to="/" />}
+          />
+          <Route
+            path="/login"
+            element={!authUser ? <Login /> : <Navigate to="/" />}
+          />
+          <Route
+            path="/profile"
+            element={authUser ? <Profile /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/settings"
+            element={authUser ? <Settings /> : <Navigate to="/login" />}
+          />
+        </Routes>
+      </div>
 
       <Toaster position="top-right" />
     </div>

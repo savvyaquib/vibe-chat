@@ -25,7 +25,7 @@ const Settings = () => {
   const [soundAlerts, setSoundAlerts] = useState(true);
 
   return (
-    <main className="min-h-screen bg-base-200 pt-20">
+    <main className="h-full overflow-y-auto bg-base-200">
       <div className="mx-auto max-w-6xl px-4 py-8">
         <div className="mb-8 flex flex-col gap-2">
           <div className="flex items-center gap-3">

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
 import Sidebar from "../components/Sidebar";
@@ -12,14 +13,46 @@ const Home = () => {
   const contactCount = users.length;
   const onlineCount = onlineUsers.filter((id) => id !== authUser?._id).length;
 
+  useEffect(() => {
+    // Prevent document-level scrolling on mobile and lock viewport
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalBodyHeight = document.body.style.height;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalHtmlHeight = document.documentElement.style.height;
+
+    // Apply viewport locks
+    document.body.style.overflow = "hidden";
+    document.body.style.height = "100dvh";
+    // Explicitly reset any fixed body position left over by HMR
+    document.body.style.position = "";
+    document.body.style.width = "";
+    document.documentElement.style.overflow = "hidden";
+    document.documentElement.style.height = "100dvh";
+
+    // Reset scroll position to top
+    window.scrollTo(0, 0);
+
+    return () => {
+      // Restore original styles
+      document.body.style.overflow = originalBodyOverflow;
+      document.body.style.height = originalBodyHeight;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      document.documentElement.style.height = originalHtmlHeight;
+    };
+  }, []);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [selectedUser]);
+
   return (
-    <main className="h-screen h-[100dvh] bg-base-200 pt-16 overflow-hidden">
-      <div className="mx-auto grid h-full max-w-full gap-4 p-0 sm:p-4 lg:max-w-7xl lg:grid-cols-[320px_minmax(0,1fr)]">
-        <div className={`flex h-full flex-col rounded-none border border-base-300 bg-base-100 shadow-sm overflow-hidden lg:rounded-3xl ${isChatOpen ? "hidden lg:flex" : "flex"}`}>
+    <main className="h-full w-full bg-base-200 overflow-hidden">
+      <div className="mx-auto flex flex-col h-full w-full max-w-full p-0 sm:p-4 lg:grid lg:max-w-7xl lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-4">
+        <div className={`flex flex-1 min-h-0 flex-col rounded-none border border-base-300 bg-base-100 shadow-sm overflow-hidden lg:rounded-3xl lg:h-full ${isChatOpen ? "hidden lg:flex" : "flex"}`}>
           <Sidebar />
         </div>
 
-        <div className={`flex h-full min-h-0 flex-col overflow-hidden border border-base-300 bg-base-100 shadow-sm lg:rounded-3xl ${selectedUser ? "flex" : "hidden lg:flex"}`}>
+        <div className={`flex flex-1 min-h-0 flex-col overflow-hidden border border-base-300 bg-base-100 shadow-sm lg:rounded-3xl lg:h-full ${selectedUser ? "flex" : "hidden lg:flex"}`}>
           {!selectedUser && (
             <div className="border-b border-base-300 bg-base-200 px-6 py-5">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
