@@ -130,14 +130,36 @@ export const logout = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
     try {
-        const { profilePic } = req.body
-        // console.log(req.user, profilePic)
-        if (!profilePic) {
-            return res.status(400).json({ message: "Profile picture is required" })
-        }
-        const uploadResponse = await cloudinary.uploader.upload(profilePic)
-        const updatedUser = await User.findByIdAndUpdate(req.user._id, { profilePic: uploadResponse.secure_url, }, { new: true })
+        const { name, profilePic } = req.body;
 
+        if (!name && !profilePic) {
+            return res.status(400).json({ message: "Name or profile picture is required" });
+        }
+
+        const updateData = {};
+
+        if (name) {
+            const trimmedName = name.trim();
+            if (trimmedName.length < 2) {
+                return res.status(400).json({ message: "Name must be at least 2 characters long" });
+            }
+            updateData.name = trimmedName;
+        }
+
+        if (profilePic) {
+            const uploadResponse = await cloudinary.uploader.upload(profilePic);
+            updateData.profilePic = uploadResponse.secure_url;
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user._id,
+            updateData,
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
 
         return res.status(200).json({
             user: {
@@ -148,7 +170,7 @@ export const updateProfile = async (req, res) => {
                 createdAt: updatedUser.createdAt,
             },
             message: "Profile updated successfully"
-        })
+        });
     } catch (error) {
         console.error("Error updating profile:", error);
         res.status(500).json({ message: error.message || 'Internal server error' });
