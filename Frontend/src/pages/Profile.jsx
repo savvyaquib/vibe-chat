@@ -1,11 +1,13 @@
 import { Camera, Mail, User } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore.js";
 import { useState } from "react";
+import ImageCropper from "../components/ImageCropper.jsx";
 
 const Profile = () => {
   const { authUser, isUpdatingProfile, updateProfile } = useAuthStore();
 
   const [selectedImage, setSelectedImage] = useState(null);
+  const [imageToCrop, setImageToCrop] = useState(null);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -13,14 +15,24 @@ const Profile = () => {
 
     const reader = new FileReader();
 
-    reader.readAsDataURL(file);
-
-    reader.onload = async () => {
-      const base64Image = reader.result;
-      setSelectedImage(base64Image);
-      const success = await updateProfile({ profilePic: base64Image });
-      if (!success) setSelectedImage(null);
+    reader.onload = () => {
+      setImageToCrop(reader.result);
+      // Reset input value so same file can be selected again
+      e.target.value = "";
     };
+
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropSave = async (croppedBase64) => {
+    setImageToCrop(null);
+    setSelectedImage(croppedBase64);
+    const success = await updateProfile({ profilePic: croppedBase64 });
+    if (!success) setSelectedImage(null);
+  };
+
+  const handleCropCancel = () => {
+    setImageToCrop(null);
   };
 
   return (
@@ -110,6 +122,14 @@ const Profile = () => {
           </div>
         </div>
       </div>
+
+      {imageToCrop && (
+        <ImageCropper
+          imageSrc={imageToCrop}
+          onCrop={handleCropSave}
+          onCancel={handleCropCancel}
+        />
+      )}
     </div>
   );
 };
