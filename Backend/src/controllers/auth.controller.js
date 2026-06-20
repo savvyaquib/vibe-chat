@@ -1,5 +1,4 @@
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import User from '../models/user.model.js';
 import { generateToken } from '../lib/utils.js';
 import cloudinary from '../lib/cloudinary.js';
@@ -42,7 +41,7 @@ export const signup = async (req, res) => {
 
 
         if (newUser) {
-            generateToken(newUser._id, res);
+            await generateToken(newUser._id, res);
             await newUser.save()
 
             res.status(201).json({
