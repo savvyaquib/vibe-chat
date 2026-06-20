@@ -1,6 +1,33 @@
 import { create } from 'zustand';
 import toast from 'react-hot-toast';
 import axiosInstance from '../lib/axios';
+import { useAuthStore } from './useAuthStore';
+import { usePreferencesStore } from './usePreferencesStore';
+
+const playNotificationSound = () => {
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const playTone = (freq, startTime, duration) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.frequency.setValueAtTime(freq, startTime);
+            gain.gain.setValueAtTime(0.05, startTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+            
+            osc.start(startTime);
+            osc.stop(startTime + duration);
+        };
+        
+        const now = audioCtx.currentTime;
+        playTone(587.33, now, 0.12); // D5
+        playTone(880, now + 0.08, 0.2);   // A5
+    } catch (e) {
+        console.error("Audio playback error:", e);
+    }
+};
 
 export const useChatStore = create((set, get) => ({
     messages: [],
@@ -28,6 +55,12 @@ export const useChatStore = create((set, get) => ({
 
             if (isRelevant) {
                 set({ messages: [...messages, message] });
+            }
+
+            const authUser = useAuthStore.getState().authUser;
+            const isFromOther = authUser && message.sender?._id !== authUser._id && message.sender !== authUser._id;
+            if (isFromOther && usePreferencesStore.getState().soundAlerts) {
+                playNotificationSound();
             }
 
             const senderId = message.sender?._id;

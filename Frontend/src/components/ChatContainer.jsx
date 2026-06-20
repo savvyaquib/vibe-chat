@@ -7,10 +7,12 @@ import MessageInput from "./MessageInput";
 import MessageSkeleton from "./skeletons/MessageSkeleton";
 import { useAuthStore } from "../store/useAuthStore";
 import { formatMessageTime } from "../lib/utils";
+import { usePreferencesStore } from "../store/usePreferencesStore";
 
 const ChatContainer = () => {
   const { messages, getMessages, isMessagesLoading, selectedUser, setSelectedUser, markMessagesAsRead } = useChatStore();
   const { authUser } = useAuthStore();
+  const { compactMode } = usePreferencesStore();
   const messageEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
   const prevMessagesLength = useRef(0);
@@ -320,7 +322,7 @@ const ChatContainer = () => {
       <ChatHeader onBack={handleCloseChat} />
 
       <div 
-        className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-base-100 to-base-200/30"
+        className={`flex-1 overflow-y-auto bg-gradient-to-b from-base-100 to-base-200/30 ${compactMode ? "p-3 space-y-2" : "p-4 space-y-4"}`}
         ref={scrollContainerRef}
         onScroll={handleScroll}
       >
@@ -340,7 +342,7 @@ const ChatContainer = () => {
               className={`chat ${isOwnMessage ? "chat-end" : "chat-start"}`}
             >
               <div className="chat-image avatar">
-                <div className="size-10 rounded-full border-2 border-base-300 shadow-sm">
+                <div className={`${compactMode ? "size-8" : "size-10"} rounded-full border-2 border-base-300 shadow-sm`}>
                   <img
                     src={
                       isOwnMessage
@@ -352,7 +354,7 @@ const ChatContainer = () => {
                 </div>
               </div>
 
-              <div className={`flex flex-col gap-3 ${isOwnMessage ? "items-end" : "items-start"}`}>
+              <div className={`flex flex-col ${compactMode ? "gap-1" : "gap-3"} ${isOwnMessage ? "items-end" : "items-start"}`}>
                 {(message.images?.length > 0 || message.image) && (
                   <div className={`grid gap-2 ${message.images?.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
                     {(message.images?.length > 0 ? message.images : [message.image]).map((imgSrc, imgIndex) => (
@@ -378,7 +380,7 @@ const ChatContainer = () => {
                   </div>
                 )}
                 {message.content && (
-                  <div className={`chat-bubble relative shadow-md max-w-[85%] sm:max-w-[70%] text-sm px-4 py-2 ${isOwnMessage ? "bg-primary text-primary-content" : "bg-base-300 text-base-content"}`}>
+                  <div className={`chat-bubble relative shadow-md max-w-[85%] sm:max-w-[70%] ${compactMode ? "text-xs px-3 py-1.5" : "text-sm px-4 py-2"} ${isOwnMessage ? "bg-primary text-primary-content" : "bg-base-300 text-base-content"}`}>
                     <span className="whitespace-pre-wrap break-words">{message.content}</span>
                     <span className="inline-block w-[55px]"></span>
                     <time className="text-[10px] opacity-70 absolute bottom-1 right-3">

@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
+import { usePreferencesStore } from "../store/usePreferencesStore";
 import { Image, Send, X } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -14,6 +15,7 @@ const MessageInput = () => {
   const inputRef = useRef(null);
   const { sendMessage, selectedUser } = useChatStore();
   const { socket } = useAuthStore();
+  const { enterToSend } = usePreferencesStore();
 
   const isMobile = typeof window !== "undefined" && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 
@@ -156,6 +158,11 @@ const MessageInput = () => {
                 typingTimeoutRef.current = setTimeout(() => {
                   socket.emit('stop_typing', { receiverId: selectedUser._id });
                 }, 2000);
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !enterToSend) {
+                e.preventDefault();
               }
             }}
           />

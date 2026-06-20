@@ -1,7 +1,7 @@
 import { Bell, Check, MessageSquare, Palette, Send, Volume2 } from "lucide-react";
-import { useState } from "react";
 import { THEMES } from "../constants";
 import { useThemeStore } from "../store/useThemeStore";
+import { usePreferencesStore } from "../store/usePreferencesStore";
 
 const PREVIEW_MESSAGES = [
   {
@@ -20,9 +20,14 @@ const PREVIEW_MESSAGES = [
 
 const Settings = () => {
   const { theme, setTheme } = useThemeStore();
-  const [compactMode, setCompactMode] = useState(false);
-  const [enterToSend, setEnterToSend] = useState(true);
-  const [soundAlerts, setSoundAlerts] = useState(true);
+  const {
+    compactMode,
+    setCompactMode,
+    enterToSend,
+    setEnterToSend,
+    soundAlerts,
+    setSoundAlerts,
+  } = usePreferencesStore();
 
   return (
     <main className="h-full overflow-y-auto bg-base-200">
