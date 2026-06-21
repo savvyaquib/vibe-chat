@@ -11,16 +11,24 @@ import { useEffect } from "react";
 import { Loader } from "lucide-react";
 import { Toaster } from "react-hot-toast";
 import { useThemeStore } from "./store/useThemeStore.js";
+import { usePreferencesStore } from "./store/usePreferencesStore.js";
 
 function App() {
   const { authUser, checkAuth, isCheckingAuth, onlineUsers, socket } = useAuthStore();
   const { setSocket } = useChatStore();
+  const { loadPreferences } = usePreferencesStore();
+  const { theme, loadTheme } = useThemeStore();
+  
   console.log("Online users in App.jsx:", onlineUsers);
 
-  const { theme } = useThemeStore();
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  useEffect(() => {
+    loadPreferences(authUser?._id);
+    loadTheme(authUser?._id);
+  }, [authUser, loadPreferences, loadTheme]);
 
   useEffect(() => {
     if (socket) {

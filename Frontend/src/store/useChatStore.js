@@ -59,7 +59,10 @@ export const useChatStore = create((set, get) => ({
 
             const authUser = useAuthStore.getState().authUser;
             const isFromOther = authUser && message.sender?._id !== authUser._id && message.sender !== authUser._id;
-            if (isFromOther && usePreferencesStore.getState().soundAlerts) {
+            
+            console.log("Message received - isFromOther:", isFromOther, "soundAlerts:", usePreferencesStore.getState().soundAlerts);
+            
+            if (isFromOther && usePreferencesStore.getState().soundAlerts === true) {
                 playNotificationSound();
             }
 
