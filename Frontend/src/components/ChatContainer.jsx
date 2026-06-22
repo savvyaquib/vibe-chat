@@ -334,7 +334,7 @@ const ChatContainer = () => {
       <ChatHeader onBack={handleCloseChat} />
 
       <div 
-        className={`flex-1 overflow-y-auto bg-gradient-to-b from-base-100 to-base-200/30 ${compactMode ? "p-3 space-y-2" : "p-4 space-y-4"}`}
+        className={`flex-1 overflow-y-auto overflow-x-hidden bg-gradient-to-b from-base-100 to-base-200/30 ${compactMode ? "p-3 space-y-2" : "p-4 space-y-4"}`}
         ref={scrollContainerRef}
         onScroll={handleScroll}
       >
