@@ -11,3 +11,19 @@ body,
   padding: 0;
   overflow: hidden;
 }
+
+@keyframes highlightPulse {
+  0% {
+    box-shadow: 0 0 0 0px var(--fallback-p, oklch(var(--p) / 1)), 0 0 10px 5px var(--fallback-p, oklch(var(--p) / 0.8));
+  }
+  50% {
+    box-shadow: 0 0 0 6px var(--fallback-p, oklch(var(--p) / 0.8)), 0 0 20px 10px var(--fallback-p, oklch(var(--p) / 0.5));
+  }
+  100% {
+    box-shadow: none;
+  }
+}
+
+.highlight-pulse .chat-bubble {
+  animation: highlightPulse 1.5s ease-in-out;
+}

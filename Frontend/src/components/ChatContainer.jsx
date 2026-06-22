@@ -1,16 +1,17 @@
 import { useChatStore } from "../store/useChatStore";
 import { useEffect, useRef, useState } from "react";
-import { X, ChevronDown } from "lucide-react";
+import { X, ChevronDown, Image } from "lucide-react";
 
 import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
+import SwipeableMessage from "./SwipeableMessage";
 import MessageSkeleton from "./skeletons/MessageSkeleton";
 import { useAuthStore } from "../store/useAuthStore";
 import { formatMessageTime } from "../lib/utils";
 import { usePreferencesStore } from "../store/usePreferencesStore";
 
 const ChatContainer = () => {
-  const { messages, getMessages, isMessagesLoading, selectedUser, setSelectedUser, markMessagesAsRead } = useChatStore();
+  const { messages, getMessages, isMessagesLoading, selectedUser, setSelectedUser, markMessagesAsRead, setReplyingToMessage } = useChatStore();
   const { authUser } = useAuthStore();
   const { compactMode } = usePreferencesStore();
   const messageEndRef = useRef(null);
@@ -32,6 +33,17 @@ const ChatContainer = () => {
 
   const containerRef = useRef(null);
   const imgRef = useRef(null);
+
+  const scrollToMessage = (msgId) => {
+    const element = document.getElementById(`message-${msgId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      element.classList.add("highlight-pulse");
+      setTimeout(() => {
+        element.classList.remove("highlight-pulse");
+      }, 1500);
+    }
+  };
 
   const handleCloseChat = () => {
     setSelectedUser(null);
@@ -337,64 +349,132 @@ const ChatContainer = () => {
           const isOwnMessage = senderId === currentUserId;
 
           return (
-            <div
+            <SwipeableMessage
               key={message._id}
-              className={`chat ${isOwnMessage ? "chat-end" : "chat-start"}`}
+              id={`message-${message._id}`}
+              onSwipeRight={() => setReplyingToMessage(message)}
             >
-              <div className="chat-image avatar">
-                <div className={`${compactMode ? "size-8" : "size-10"} rounded-full border-2 border-base-300 shadow-sm`}>
-                  <img
-                    src={
-                      isOwnMessage
-                        ? authUser.profilePic || "/avatar.png"
-                        : selectedUser?.profilePic || "/avatar.png"
-                    }
-                    alt="profile pic"
-                  />
+              <div
+                className={`chat ${isOwnMessage ? "chat-end" : "chat-start"}`}
+              >
+                <div className="chat-image avatar">
+                  <div className={`${compactMode ? "size-8" : "size-10"} rounded-full border-2 border-base-300 shadow-sm`}>
+                    <img
+                      src={
+                        isOwnMessage
+                          ? authUser.profilePic || "/avatar.png"
+                          : selectedUser?.profilePic || "/avatar.png"
+                      }
+                      alt="profile pic"
+                    />
+                  </div>
+                </div>
+
+                <div className={`flex flex-col ${compactMode ? "gap-1" : "gap-3"} ${isOwnMessage ? "items-end" : "items-start"}`}>
+                  {(message.images?.length > 0 || message.image) && (
+                    <div className={`grid gap-2 ${message.images?.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+                      {(message.images?.length > 0 ? message.images : [message.image]).map((imgSrc, imgIndex) => (
+                        <button
+                          key={`${message._id}-img-${imgIndex}`}
+                          type="button"
+                          onClick={() => openPreview(imgSrc)}
+                          className="rounded-3xl overflow-hidden border border-base-300 bg-base-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          <img
+                            src={imgSrc}
+                            alt={`Attachment ${imgIndex + 1}`}
+                            onLoad={() => {
+                              if (scrollContainerRef.current && !hasManuallyScrolledRef.current) {
+                                scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+                              }
+                            }}
+                            className={`w-full rounded-3xl object-cover transition-all duration-200 hover:opacity-90 ${message.images?.length > 1 ? "max-h-[200px]" : "max-h-[280px]"}`}
+                            style={{ maxWidth: message.images?.length > 1 ? "220px" : "320px" }}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {message.content && (
+                    <div className={`chat-bubble relative shadow-md max-w-[85%] sm:max-w-[70%] ${compactMode ? "text-xs px-3 py-1.5" : "text-sm px-4 py-2"} ${isOwnMessage ? "bg-primary text-primary-content" : "bg-base-300 text-base-content"}`}>
+                      {message.replyTo && (
+                        <div 
+                          onClick={() => scrollToMessage(message.replyTo._id || message.replyTo)}
+                          className={`mb-2 p-2 rounded border-l-4 border-primary text-[11px] cursor-pointer transition-colors flex items-center justify-between gap-2 max-w-full overflow-hidden ${
+                            isOwnMessage 
+                              ? "bg-black/20 hover:bg-black/35 text-primary-content" 
+                              : "bg-base-100/50 hover:bg-base-100/80 text-base-content"
+                          }`}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className={`font-bold truncate ${isOwnMessage ? "text-white" : "text-primary"}`}>
+                              {message.replyTo.sender?._id === currentUserId 
+                                ? "You" 
+                                : message.replyTo.sender?.name || "User"}
+                            </div>
+                            <div className={`truncate mt-0.5 ${isOwnMessage ? "text-white/80" : "text-base-content/70"}`}>
+                              {message.replyTo.content ? (
+                                message.replyTo.content
+                              ) : message.replyTo.image || (message.replyTo.images && message.replyTo.images.length > 0) ? (
+                                <span className="flex items-center gap-1">
+                                  <Image className="size-3" /> Photo
+                                </span>
+                              ) : (
+                                "Attachment"
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      <span className="whitespace-pre-wrap break-words">{message.content}</span>
+                      <span className="inline-block w-[55px]"></span>
+                      <time className="text-[10px] opacity-70 absolute bottom-1 right-3">
+                        {formatMessageTime(message.createdAt)}
+                      </time>
+                    </div>
+                  )}
+                  {!message.content && message.replyTo && (
+                    <div className={`chat-bubble relative shadow-md max-w-[85%] sm:max-w-[70%] ${compactMode ? "text-xs px-3 py-1.5" : "text-sm px-4 py-2"} ${isOwnMessage ? "bg-primary text-primary-content" : "bg-base-300 text-base-content"}`}>
+                      <div 
+                        onClick={() => scrollToMessage(message.replyTo._id || message.replyTo)}
+                        className={`p-2 rounded border-l-4 border-primary text-[11px] cursor-pointer transition-colors flex items-center justify-between gap-2 max-w-full overflow-hidden ${
+                          isOwnMessage 
+                            ? "bg-black/20 hover:bg-black/35 text-primary-content" 
+                            : "bg-base-100/50 hover:bg-base-100/80 text-base-content"
+                        }`}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className={`font-bold truncate ${isOwnMessage ? "text-white" : "text-primary"}`}>
+                            {message.replyTo.sender?._id === currentUserId 
+                              ? "You" 
+                              : message.replyTo.sender?.name || "User"}
+                          </div>
+                          <div className={`truncate mt-0.5 ${isOwnMessage ? "text-white/80" : "text-base-content/70"}`}>
+                            {message.replyTo.content ? (
+                              message.replyTo.content
+                            ) : message.replyTo.image || (message.replyTo.images && message.replyTo.images.length > 0) ? (
+                              <span className="flex items-center gap-1">
+                                <Image className="size-3" /> Photo
+                              </span>
+                            ) : (
+                              "Attachment"
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <time className="text-[10px] opacity-70 absolute bottom-1 right-3">
+                        {formatMessageTime(message.createdAt)}
+                      </time>
+                    </div>
+                  )}
+                  {isOwnMessage && index === messages.length - 1 && message.isRead && (
+                    <div className="text-[11px] text-base-content/60 font-medium -mt-1.5 pr-1 tracking-wide">
+                      Seen
+                    </div>
+                  )}
                 </div>
               </div>
-
-              <div className={`flex flex-col ${compactMode ? "gap-1" : "gap-3"} ${isOwnMessage ? "items-end" : "items-start"}`}>
-                {(message.images?.length > 0 || message.image) && (
-                  <div className={`grid gap-2 ${message.images?.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
-                    {(message.images?.length > 0 ? message.images : [message.image]).map((imgSrc, imgIndex) => (
-                      <button
-                        key={`${message._id}-img-${imgIndex}`}
-                        type="button"
-                        onClick={() => openPreview(imgSrc)}
-                        className="rounded-3xl overflow-hidden border border-base-300 bg-base-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                      >
-                        <img
-                          src={imgSrc}
-                          alt={`Attachment ${imgIndex + 1}`}
-                          onLoad={() => {
-                            if (scrollContainerRef.current && !hasManuallyScrolledRef.current) {
-                              scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-                            }
-                          }}
-                          className={`w-full rounded-3xl object-cover transition-all duration-200 hover:opacity-90 ${message.images?.length > 1 ? "max-h-[200px]" : "max-h-[280px]"}`}
-                          style={{ maxWidth: message.images?.length > 1 ? "220px" : "320px" }}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {message.content && (
-                  <div className={`chat-bubble relative shadow-md max-w-[85%] sm:max-w-[70%] ${compactMode ? "text-xs px-3 py-1.5" : "text-sm px-4 py-2"} ${isOwnMessage ? "bg-primary text-primary-content" : "bg-base-300 text-base-content"}`}>
-                    <span className="whitespace-pre-wrap break-words">{message.content}</span>
-                    <span className="inline-block w-[55px]"></span>
-                    <time className="text-[10px] opacity-70 absolute bottom-1 right-3">
-                      {formatMessageTime(message.createdAt)}
-                    </time>
-                  </div>
-                )}
-                {isOwnMessage && index === messages.length - 1 && message.isRead && (
-                  <div className="text-[11px] text-base-content/60 font-medium -mt-1.5 pr-1 tracking-wide">
-                    Seen
-                  </div>
-                )}
-              </div>
-            </div>
+            </SwipeableMessage>
           )
         })}
         <div ref={messageEndRef} />

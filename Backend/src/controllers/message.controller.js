@@ -87,6 +87,13 @@ export const getMessages = async (req, res) => {
             .sort({ timestamp: 1 })
             .populate("sender", "name fullName email profilePic")
             .populate("receiver", "name fullName email profilePic")
+            .populate({
+                path: "replyTo",
+                populate: {
+                    path: "sender",
+                    select: "name fullName email profilePic"
+                }
+            })
 
         res.status(200).json({ messages })
     } catch (error) {
@@ -122,7 +129,7 @@ export const markMessagesAsRead = async (req, res) => {
 export const sendMessage = async (req, res) => {
     try {
         const { id } = req.params
-        const { content, text, image, images } = req.body
+        const { content, text, image, images, replyTo } = req.body
         const messageContent = content || text
 
         if (!messageContent && !image && (!images || images.length === 0)) {
@@ -154,11 +161,19 @@ export const sendMessage = async (req, res) => {
             content: messageContent,
             image: imageUrls[0],
             images: imageUrls,
+            replyTo: replyTo || null,
         })
 
         const populatedMessage = await Message.findById(message._id)
             .populate("sender", "name fullName email profilePic")
             .populate("receiver", "name fullName email profilePic")
+            .populate({
+                path: "replyTo",
+                populate: {
+                    path: "sender",
+                    select: "name fullName email profilePic"
+                }
+            })
 
         const receiverSocketId = onlineUsers.get(id)
         if (receiverSocketId) {

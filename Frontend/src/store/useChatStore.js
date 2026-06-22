@@ -36,6 +36,9 @@ export const useChatStore = create((set, get) => ({
     isUsersLoading: false,
     isMessagesLoading: false,
     typingUsers: {},
+    replyingToMessage: null,
+
+    setReplyingToMessage: (message) => set({ replyingToMessage: message }),
 
     setSocket: (socket) => {
         if (!socket) return;
@@ -163,7 +166,7 @@ export const useChatStore = create((set, get) => ({
         }
     },
     sendMessage: async ({ text, image, images }) => {
-        const { selectedUser, messages } = get();
+        const { selectedUser, messages, replyingToMessage } = get();
         try {
             const payload = {
                 content: text,
@@ -177,11 +180,16 @@ export const useChatStore = create((set, get) => ({
                 payload.images = images;
             }
 
+            if (replyingToMessage) {
+                payload.replyTo = replyingToMessage._id;
+            }
+
             const response = await axiosInstance.post(`/messages/${selectedUser._id}`, payload);
 
             if (response.data?.message) {
                 set((state) => ({ 
                     messages: [...state.messages, response.data.message],
+                    replyingToMessage: null,
                     users: state.users.map(user => 
                         user._id === selectedUser._id 
                             ? { ...user, lastMessage: response.data.message }
@@ -197,6 +205,7 @@ export const useChatStore = create((set, get) => ({
     setSelectedUser: (user) => {
         set((state) => ({
             selectedUser: user,
+            replyingToMessage: null,
             users: state.users.map(u => 
                 u._id === user?._id ? { ...u, unreadCount: 0 } : u
             )

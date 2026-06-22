@@ -2,7 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
 import { usePreferencesStore } from "../store/usePreferencesStore";
-import { Image, Send, X } from "lucide-react";
+import { Image, Send, X, CornerUpLeft } from "lucide-react";
 import toast from "react-hot-toast";
 
 const MessageInput = () => {
@@ -13,8 +13,8 @@ const MessageInput = () => {
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const inputRef = useRef(null);
-  const { sendMessage, selectedUser } = useChatStore();
-  const { socket } = useAuthStore();
+  const { sendMessage, selectedUser, replyingToMessage, setReplyingToMessage } = useChatStore();
+  const { socket, authUser } = useAuthStore();
   const { enterToSend } = usePreferencesStore();
 
   const isMobile = typeof window !== "undefined" && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
@@ -114,6 +114,41 @@ const MessageInput = () => {
 
   return (
     <div className="p-4 w-full bg-base-100 border-t border-base-300">
+      {replyingToMessage && (
+        <div className="mb-3 flex items-center justify-between bg-base-200/80 p-3 rounded-lg border-l-4 border-primary shadow-sm transition-all duration-200">
+          <div className="flex-1 min-w-0 pr-4">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
+              <CornerUpLeft className="size-3.5" />
+              <span>
+                Replying to{" "}
+                {replyingToMessage.sender?._id === authUser?._id
+                  ? "You"
+                  : replyingToMessage.sender?.name || "User"}
+              </span>
+            </div>
+            <div className="text-xs text-base-content/75 truncate mt-1">
+              {replyingToMessage.content ? (
+                replyingToMessage.content
+              ) : replyingToMessage.image || (replyingToMessage.images && replyingToMessage.images.length > 0) ? (
+                <span className="flex items-center gap-1">
+                  <Image className="size-3" /> Photo
+                </span>
+              ) : (
+                "Attachment"
+              )}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setReplyingToMessage(null)}
+            className="p-1.5 rounded-full hover:bg-base-300/80 text-base-content/75 transition-colors focus:outline-none"
+            aria-label="Cancel reply"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+      )}
+
       {imagePreviews.length > 0 && (
         <div className="mb-3 flex flex-wrap gap-2">
           {imagePreviews.map((preview, index) => (
