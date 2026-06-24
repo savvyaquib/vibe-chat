@@ -1,9 +1,11 @@
 import { useAuthStore } from "../store/useAuthStore.js";
+import { useChatStore } from "../store/useChatStore.js";
 import { Link } from "react-router-dom";
 import { MessageSquare, Settings, User } from "lucide-react";
 
 const Navbar = () => {
   const { authUser, logout } = useAuthStore();
+  const { setSelectedUser } = useChatStore();
 
   return (
     <header className="bg-base-100 border-b border-base-300 w-full backdrop-blur-lg bg-base-100/80">
@@ -12,6 +14,7 @@ const Navbar = () => {
           <div className="flex items-center gap-8">
             <Link
               to="/"
+              onClick={() => setSelectedUser(null)}
               className="flex items-center gap-2.5 hover:opacity-80 transition-all"
             >
               <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">

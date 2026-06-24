@@ -1,6 +1,6 @@
 import { useChatStore } from "../store/useChatStore";
 import { useEffect, useRef, useState } from "react";
-import { X, ChevronDown, Image } from "lucide-react";
+import { X, ChevronDown, Image, CornerUpLeft } from "lucide-react";
 
 import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
@@ -400,19 +400,22 @@ const ChatContainer = () => {
                       {message.replyTo && (
                         <div 
                           onClick={() => scrollToMessage(message.replyTo._id || message.replyTo)}
-                          className={`mb-2 p-2 rounded border-l-4 border-primary text-[11px] cursor-pointer transition-colors flex items-center justify-between gap-2 max-w-full overflow-hidden ${
+                          className={`mb-1.5 py-1 px-2 rounded border-l-2 border-primary text-[10px] cursor-pointer transition-colors flex items-center justify-between gap-2 max-w-full overflow-hidden ${
                             isOwnMessage 
-                              ? "bg-black/20 hover:bg-black/35 text-primary-content" 
-                              : "bg-base-100/50 hover:bg-base-100/80 text-base-content"
+                              ? "bg-black/25 hover:bg-black/35 text-primary-content" 
+                              : "bg-base-100/60 hover:bg-base-100/90 text-base-content"
                           }`}
                         >
                           <div className="min-w-0 flex-1">
-                            <div className={`font-bold truncate ${isOwnMessage ? "text-white" : "text-primary"}`}>
-                              {message.replyTo.sender?._id === currentUserId 
-                                ? "You" 
-                                : message.replyTo.sender?.name || "User"}
+                            <div className={`font-bold flex items-center gap-1 truncate ${isOwnMessage ? "text-white/95" : "text-primary"}`}>
+                              <CornerUpLeft className="size-3 shrink-0" />
+                              <span>
+                                {message.replyTo.sender?._id === currentUserId 
+                                  ? "Replying to You" 
+                                  : `Replying to ${message.replyTo.sender?.name || "User"}`}
+                              </span>
                             </div>
-                            <div className={`truncate mt-0.5 ${isOwnMessage ? "text-white/80" : "text-base-content/70"}`}>
+                            <div className={`truncate mt-0.5 opacity-90 ${isOwnMessage ? "text-white/80" : "text-base-content/75"}`}>
                               {message.replyTo.content ? (
                                 message.replyTo.content
                               ) : message.replyTo.image || (message.replyTo.images && message.replyTo.images.length > 0) ? (
@@ -437,19 +440,22 @@ const ChatContainer = () => {
                     <div className={`chat-bubble relative shadow-md max-w-[85%] sm:max-w-[70%] ${compactMode ? "text-xs px-3 py-1.5" : "text-sm px-4 py-2"} ${isOwnMessage ? "bg-primary text-primary-content" : "bg-base-300 text-base-content"}`}>
                       <div 
                         onClick={() => scrollToMessage(message.replyTo._id || message.replyTo)}
-                        className={`p-2 rounded border-l-4 border-primary text-[11px] cursor-pointer transition-colors flex items-center justify-between gap-2 max-w-full overflow-hidden ${
+                        className={`py-1 px-2 rounded border-l-2 border-primary text-[10px] cursor-pointer transition-colors flex items-center justify-between gap-2 max-w-full overflow-hidden ${
                           isOwnMessage 
-                            ? "bg-black/20 hover:bg-black/35 text-primary-content" 
-                            : "bg-base-100/50 hover:bg-base-100/80 text-base-content"
+                            ? "bg-black/25 hover:bg-black/35 text-primary-content" 
+                            : "bg-base-100/60 hover:bg-base-100/90 text-base-content"
                         }`}
                       >
                         <div className="min-w-0 flex-1">
-                          <div className={`font-bold truncate ${isOwnMessage ? "text-white" : "text-primary"}`}>
-                            {message.replyTo.sender?._id === currentUserId 
-                              ? "You" 
-                              : message.replyTo.sender?.name || "User"}
+                          <div className={`font-bold flex items-center gap-1 truncate ${isOwnMessage ? "text-white/95" : "text-primary"}`}>
+                            <CornerUpLeft className="size-3 shrink-0" />
+                            <span>
+                              {message.replyTo.sender?._id === currentUserId 
+                                ? "Replying to You" 
+                                : `Replying to ${message.replyTo.sender?.name || "User"}`}
+                            </span>
                           </div>
-                          <div className={`truncate mt-0.5 ${isOwnMessage ? "text-white/80" : "text-base-content/70"}`}>
+                          <div className={`truncate mt-0.5 opacity-90 ${isOwnMessage ? "text-white/80" : "text-base-content/75"}`}>
                             {message.replyTo.content ? (
                               message.replyTo.content
                             ) : message.replyTo.image || (message.replyTo.images && message.replyTo.images.length > 0) ? (
