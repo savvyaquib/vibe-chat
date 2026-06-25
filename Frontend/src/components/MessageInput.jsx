@@ -2,15 +2,18 @@ import { useRef, useState, useEffect } from "react";
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
 import { usePreferencesStore } from "../store/usePreferencesStore";
-import { Image, Send, X, CornerUpLeft } from "lucide-react";
+import { Image, Send, X, CornerUpLeft, Smile } from "lucide-react";
 import toast from "react-hot-toast";
+import EmojiPicker from "./EmojiPicker";
 
 const MessageInput = () => {
   const [text, setText] = useState("");
   const [imagePreviews, setImagePreviews] = useState([]);
   const [isSending, setIsSending] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const isSendingRef = useRef(false);
   const fileInputRef = useRef(null);
+  const emojiButtonRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const inputRef = useRef(null);
   const { sendMessage, selectedUser, replyingToMessage, setReplyingToMessage } = useChatStore();
@@ -71,6 +74,26 @@ const MessageInput = () => {
     setText("");
     setImagePreviews([]);
     if (fileInputRef.current) fileInputRef.current.value = "";
+    setShowEmojiPicker(false);
+  };
+
+  const handleEmojiSelect = (emoji) => {
+    const input = inputRef.current;
+    if (input) {
+      const start = input.selectionStart;
+      const end = input.selectionEnd;
+      const newText = text.substring(0, start) + emoji + text.substring(end);
+      setText(newText);
+
+      // Restore focus and position cursor right after the newly inserted emoji
+      setTimeout(() => {
+        input.focus();
+        const cursorPosition = start + emoji.length;
+        input.setSelectionRange(cursorPosition, cursorPosition);
+      }, 0);
+    } else {
+      setText((prev) => prev + emoji);
+    }
   };
 
   const handleSendMessage = async (e) => {
@@ -113,7 +136,15 @@ const MessageInput = () => {
   };
 
   return (
-    <div className="p-4 w-full bg-base-100 border-t border-base-300">
+    <div className="p-4 w-full bg-base-100 border-t border-base-300 relative">
+      {showEmojiPicker && (
+        <EmojiPicker
+          onSelect={handleEmojiSelect}
+          onClose={() => setShowEmojiPicker(false)}
+          triggerRef={emojiButtonRef}
+        />
+      )}
+
       {replyingToMessage && (
         <div className="mb-3 flex items-center justify-between bg-base-200/80 p-3 rounded-lg border-l-4 border-primary shadow-sm transition-all duration-200">
           <div className="flex-1 min-w-0 pr-4">
@@ -211,14 +242,28 @@ const MessageInput = () => {
             disabled={isSending}
           />
 
-          <button
-            type="button"
-            className={`btn btn-circle ${imagePreviews.length > 0 ? "text-emerald-500" : "text-zinc-400"}`}
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isSending}
-          >
-            <Image size={20} />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              ref={emojiButtonRef}
+              type="button"
+              className={`btn btn-circle ${showEmojiPicker ? "text-primary bg-primary/10" : "text-zinc-400 bg-transparent hover:bg-base-300"}`}
+              onClick={() => setShowEmojiPicker((prev) => !prev)}
+              disabled={isSending}
+              title="Select Emoji"
+            >
+              <Smile size={20} />
+            </button>
+
+            <button
+              type="button"
+              className={`btn btn-circle ${imagePreviews.length > 0 ? "text-emerald-500" : "text-zinc-400 bg-transparent hover:bg-base-300"}`}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isSending}
+              title="Upload Images"
+            >
+              <Image size={20} />
+            </button>
+          </div>
         </div>
         <button
           type="submit"
