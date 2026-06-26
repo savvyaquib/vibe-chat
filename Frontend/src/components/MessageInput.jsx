@@ -5,6 +5,7 @@ import { usePreferencesStore } from "../store/usePreferencesStore";
 import { Image, Send, X, CornerUpLeft, Smile } from "lucide-react";
 import toast from "react-hot-toast";
 import EmojiPicker from "./EmojiPicker";
+import { toTitleCase } from "../lib/utils";
 
 const MessageInput = () => {
   const [text, setText] = useState("");
@@ -19,6 +20,13 @@ const MessageInput = () => {
   const { sendMessage, selectedUser, replyingToMessage, setReplyingToMessage } = useChatStore();
   const { socket, authUser } = useAuthStore();
   const { enterToSend } = usePreferencesStore();
+
+  const isReplyToSelf = replyingToMessage?.sender?._id === authUser?._id;
+  const replyDisplayName = replyingToMessage 
+    ? (isReplyToSelf ? "You" : toTitleCase(replyingToMessage.sender?.name || "User"))
+    : "";
+  const replyBorderColor = isReplyToSelf ? "border-[#00a884]" : "border-[#8e7cf8]";
+  const replyTextColor = isReplyToSelf ? "text-[#00a884]" : "text-[#8e7cf8]";
 
   const isMobile = typeof window !== "undefined" && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 
@@ -146,16 +154,10 @@ const MessageInput = () => {
       )}
 
       {replyingToMessage && (
-        <div className="mb-3 flex items-center justify-between bg-base-200/80 p-3 rounded-lg border-l-4 border-primary shadow-sm transition-all duration-200">
+        <div className={`mb-3 flex items-center justify-between bg-base-300/50 p-2.5 rounded-lg border-l-4 ${replyBorderColor} shadow-sm transition-all duration-200`}>
           <div className="flex-1 min-w-0 pr-4">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
-              <CornerUpLeft className="size-3.5" />
-              <span>
-                Replying to{" "}
-                {replyingToMessage.sender?._id === authUser?._id
-                  ? "You"
-                  : replyingToMessage.sender?.name || "User"}
-              </span>
+            <div className={`text-xs font-bold ${replyTextColor}`}>
+              {replyDisplayName}
             </div>
             <div className="text-xs text-base-content/75 truncate mt-1">
               {replyingToMessage.content ? (
@@ -172,7 +174,7 @@ const MessageInput = () => {
           <button
             type="button"
             onClick={() => setReplyingToMessage(null)}
-            className="p-1.5 rounded-full hover:bg-base-300/80 text-base-content/75 transition-colors focus:outline-none"
+            className="p-1 rounded-full hover:bg-base-300/80 text-base-content/75 transition-colors focus:outline-none"
             aria-label="Cancel reply"
           >
             <X className="size-4" />
