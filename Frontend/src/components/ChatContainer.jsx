@@ -7,7 +7,7 @@ import MessageInput from "./MessageInput";
 import SwipeableMessage from "./SwipeableMessage";
 import MessageSkeleton from "./skeletons/MessageSkeleton";
 import { useAuthStore } from "../store/useAuthStore";
-import { formatMessageTime, toTitleCase } from "../lib/utils";
+import { formatMessageTime, toTitleCase, getEmojiInfo } from "../lib/utils";
 import { usePreferencesStore } from "../store/usePreferencesStore";
 
 const ChatContainer = () => {
@@ -395,50 +395,120 @@ const ChatContainer = () => {
                       ))}
                     </div>
                   )}
-                  {message.content && (
-                    <div className={`chat-bubble relative shadow-md max-w-[85%] sm:max-w-[70%] ${compactMode ? "text-xs px-3 py-1.5" : "text-sm px-4 py-2"} ${isOwnMessage ? "bg-primary text-primary-content" : "bg-base-300 text-base-content"}`}>
-                      {message.replyTo && (() => {
-                        const isReplyToSelf = message.replyTo.sender?._id === currentUserId;
-                        const replyDisplayName = isReplyToSelf ? "You" : toTitleCase(message.replyTo.sender?.name || "User");
-                        const replyBorderColor = isReplyToSelf ? "border-[#00a884]" : "border-[#8e7cf8]";
-                        const replyTextColor = isReplyToSelf ? "text-[#00a884]" : "text-[#8e7cf8]";
-                        return (
-                          <div 
-                            onClick={() => scrollToMessage(message.replyTo._id || message.replyTo)}
-                            className={`mb-1.5 py-1.5 px-2.5 rounded border-l-4 ${replyBorderColor} text-[11px] cursor-pointer transition-colors flex items-center justify-between gap-2 max-w-full overflow-hidden ${
-                              isOwnMessage 
-                                ? "bg-black/20 hover:bg-black/30 text-primary-content" 
-                                : "bg-black/10 hover:bg-black/15 text-base-content"
-                            }`}
-                          >
-                            <div className="min-w-0 flex-1">
-                              <div className={`font-bold truncate ${replyTextColor}`}>
-                                {replyDisplayName}
+                  {message.content && (() => {
+                    const emojiInfo = getEmojiInfo(message.content);
+                    const isOnlyEmojis = emojiInfo.isOnlyEmojis && emojiInfo.count <= 2;
+                    const emojiSizeClass = emojiInfo.count === 1 ? "text-5xl" : "text-4xl";
+
+                    if (isOnlyEmojis) {
+                      return (
+                        <div className={`flex flex-col ${isOwnMessage ? "items-end" : "items-start"} max-w-[85%] sm:max-w-[70%]`}>
+                          {message.replyTo && (() => {
+                            const isReplyToSelf = message.replyTo.sender?._id === currentUserId;
+                            const replyDisplayName = isReplyToSelf ? "You" : toTitleCase(message.replyTo.sender?.name || "User");
+                            const replyBorderColor = isReplyToSelf ? "border-[#00a884]" : "border-[#8e7cf8]";
+                            const replyTextColor = isReplyToSelf ? "text-[#00a884]" : "text-[#8e7cf8]";
+                            return (
+                              <div className={`chat-bubble relative shadow-md p-0 flex flex-col ${isOwnMessage ? "bg-primary text-primary-content" : "bg-base-300 text-base-content"} mb-1.5`}>
+                                <div 
+                                  onClick={() => scrollToMessage(message.replyTo._id || message.replyTo)}
+                                  className={`py-1.5 px-2.5 border-l-4 ${replyBorderColor} text-[11.5px] cursor-pointer transition-colors flex items-center justify-between gap-2 w-full min-w-[180px] sm:min-w-[220px] overflow-hidden rounded-[inherit] ${
+                                    isOwnMessage 
+                                      ? "bg-black/20 hover:bg-black/30 text-primary-content" 
+                                      : "bg-black/10 hover:bg-black/15 text-base-content"
+                                  }`}
+                                >
+                                  <div className="min-w-0 flex-1">
+                                    <div className={`font-bold truncate ${replyTextColor}`}>
+                                      {replyDisplayName}
+                                    </div>
+                                    <div className={`truncate mt-0.5 opacity-90 ${isOwnMessage ? "text-white/80" : "text-base-content/75"}`}>
+                                      {message.replyTo.content ? (
+                                        message.replyTo.content
+                                      ) : message.replyTo.image || (message.replyTo.images && message.replyTo.images.length > 0) ? (
+                                        <span className="flex items-center gap-1">
+                                          <Image className="size-3" /> Photo
+                                        </span>
+                                      ) : (
+                                        "Attachment"
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
-                              <div className={`truncate mt-0.5 opacity-90 ${isOwnMessage ? "text-white/80" : "text-base-content/75"}`}>
-                                {message.replyTo.content ? (
-                                  message.replyTo.content
-                                ) : message.replyTo.image || (message.replyTo.images && message.replyTo.images.length > 0) ? (
-                                  <span className="flex items-center gap-1">
-                                    <Image className="size-3" /> Photo
-                                  </span>
-                                ) : (
-                                  "Attachment"
-                                )}
+                            );
+                          })()}
+                          
+                          <div className={`select-text ${emojiSizeClass} py-1 px-1 filter drop-shadow-sm whitespace-nowrap`}>
+                            {message.content}
+                          </div>
+                          
+                          <div className="mt-1 px-1.5 py-0.5 rounded bg-black/10 text-base-content/70 text-[9px]">
+                            {formatMessageTime(message.createdAt)}
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // Otherwise, render normal chat bubble
+                    return (
+                      <div className={`chat-bubble relative shadow-md max-w-[85%] sm:max-w-[70%] ${
+                        message.replyTo 
+                          ? "p-0 flex flex-col" 
+                          : (compactMode ? "text-xs px-3 py-1.5" : "text-[15.5px] px-4 py-2")
+                      } ${isOwnMessage ? "bg-primary text-primary-content" : "bg-base-300 text-base-content"}`}>
+                        {message.replyTo && (() => {
+                          const isReplyToSelf = message.replyTo.sender?._id === currentUserId;
+                          const replyDisplayName = isReplyToSelf ? "You" : toTitleCase(message.replyTo.sender?.name || "User");
+                          const replyBorderColor = isReplyToSelf ? "border-[#00a884]" : "border-[#8e7cf8]";
+                          const replyTextColor = isReplyToSelf ? "text-[#00a884]" : "text-[#8e7cf8]";
+                          return (
+                            <div 
+                              onClick={() => scrollToMessage(message.replyTo._id || message.replyTo)}
+                              className={`py-1.5 px-2.5 border-l-4 ${replyBorderColor} text-[11.5px] cursor-pointer transition-colors flex items-center justify-between gap-2 w-full min-w-[180px] sm:min-w-[220px] overflow-hidden rounded-t-[inherit] ${
+                                isOwnMessage 
+                                  ? "bg-black/20 hover:bg-black/30 text-primary-content" 
+                                  : "bg-black/10 hover:bg-black/15 text-base-content"
+                              }`}
+                            >
+                              <div className="min-w-0 flex-1">
+                                <div className={`font-bold truncate ${replyTextColor}`}>
+                                  {replyDisplayName}
+                                </div>
+                                <div className={`truncate mt-0.5 opacity-90 ${isOwnMessage ? "text-white/80" : "text-base-content/75"}`}>
+                                  {message.replyTo.content ? (
+                                    message.replyTo.content
+                                  ) : message.replyTo.image || (message.replyTo.images && message.replyTo.images.length > 0) ? (
+                                    <span className="flex items-center gap-1">
+                                      <Image className="size-3" /> Photo
+                                    </span>
+                                  ) : (
+                                    "Attachment"
+                                  )}
+                                </div>
                               </div>
                             </div>
+                          );
+                        })()}
+                        {message.replyTo ? (
+                          <div className={`${compactMode ? "text-xs px-3 pb-1.5 pt-1" : "text-[15.5px] px-4 pb-2 pt-1.5"}`}>
+                            <span className="whitespace-pre-wrap break-words">{message.content}</span>
+                            <span className="inline-block w-[55px]"></span>
                           </div>
-                        );
-                      })()}
-                      <span className="whitespace-pre-wrap break-words">{message.content}</span>
-                      <span className="inline-block w-[55px]"></span>
-                      <time className="text-[10px] opacity-70 absolute bottom-1 right-3">
-                        {formatMessageTime(message.createdAt)}
-                      </time>
-                    </div>
-                  )}
+                        ) : (
+                          <>
+                            <span className="whitespace-pre-wrap break-words">{message.content}</span>
+                            <span className="inline-block w-[55px]"></span>
+                          </>
+                        )}
+                        <time className="text-[10px] opacity-70 absolute bottom-1 right-3">
+                          {formatMessageTime(message.createdAt)}
+                        </time>
+                      </div>
+                    );
+                  })()}
                   {!message.content && message.replyTo && (
-                    <div className={`chat-bubble relative shadow-md max-w-[85%] sm:max-w-[70%] ${compactMode ? "text-xs px-3 py-1.5" : "text-sm px-4 py-2"} ${isOwnMessage ? "bg-primary text-primary-content" : "bg-base-300 text-base-content"}`}>
+                    <div className={`chat-bubble relative shadow-md max-w-[85%] sm:max-w-[70%] p-0 flex flex-col ${isOwnMessage ? "bg-primary text-primary-content" : "bg-base-300 text-base-content"}`}>
                       {(() => {
                         const isReplyToSelf = message.replyTo.sender?._id === currentUserId;
                         const replyDisplayName = isReplyToSelf ? "You" : toTitleCase(message.replyTo.sender?.name || "User");
@@ -447,7 +517,7 @@ const ChatContainer = () => {
                         return (
                           <div 
                             onClick={() => scrollToMessage(message.replyTo._id || message.replyTo)}
-                            className={`py-1.5 px-2.5 rounded border-l-4 ${replyBorderColor} text-[11px] cursor-pointer transition-colors flex items-center justify-between gap-2 max-w-full overflow-hidden ${
+                            className={`py-1.5 px-2.5 border-l-4 ${replyBorderColor} text-[11.5px] cursor-pointer transition-colors flex items-center justify-between gap-2 w-full min-w-[180px] sm:min-w-[220px] overflow-hidden rounded-[inherit] ${
                               isOwnMessage 
                                 ? "bg-black/20 hover:bg-black/30 text-primary-content" 
                                 : "bg-black/10 hover:bg-black/15 text-base-content"
@@ -472,6 +542,7 @@ const ChatContainer = () => {
                           </div>
                         );
                       })()}
+                      <div className="h-6"></div>
                       <time className="text-[10px] opacity-70 absolute bottom-1 right-3">
                         {formatMessageTime(message.createdAt)}
                       </time>
